@@ -1,6 +1,4 @@
 import { Geist, Geist_Mono, Noto_Sans_SC } from "next/font/google";
-import { NextIntlClientProvider } from "next-intl";
-import { getMessages, setRequestLocale } from "next-intl/server";
 import type { ReactNode } from "react";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { RegisterServiceWorker } from "@/components/ServiceWorkerRegistration";
@@ -30,10 +28,7 @@ export async function generateMetadata() {
 	return generatePageMetadata();
 }
 
-export default async function RootLayout({ children }: { children: ReactNode }) {
-	setRequestLocale("zh");
-	const messages = await getMessages();
-
+export default function RootLayout({ children }: { children: ReactNode }) {
 	return (
 		<html lang="zh" suppressHydrationWarning>
 			<head>
@@ -46,12 +41,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
 				<GoogleAnalytics />
 				<UmamiAnalytics />
 				<RegisterServiceWorker />
-				<NextIntlClientProvider locale="zh" messages={messages}>
-					<ThemeProvider>
-						{children}
-						<Toaster />
-					</ThemeProvider>
-				</NextIntlClientProvider>
+				<ThemeProvider>
+					{children}
+					<Toaster />
+				</ThemeProvider>
 			</body>
 		</html>
 	);

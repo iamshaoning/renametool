@@ -1,26 +1,24 @@
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
 import { SITE_ORIGIN, SITE_URL } from "@/lib/site";
 
 const LOCALE = "zh";
 
+const METADATA = {
+	title: "在线批量重命名工具",
+};
+
 type GeneratePageMetadataParams = {
 	path?: string;
-	namespace?: string;
 };
 
 export async function generatePageMetadata({
 	path = "",
-	namespace = "metadata",
 }: GeneratePageMetadataParams = {}): Promise<Metadata> {
-	const t = await getTranslations({ locale: LOCALE, namespace });
-
 	const url = `${SITE_URL}${path}`;
 	const imageUrl = `${SITE_URL}/opengraph-image`;
 
 	return {
-		title: t("title"),
-		description: t("description"),
+		title: METADATA.title,
 		metadataBase: new URL(SITE_ORIGIN),
 		keywords: [
 			"bulk rename files",
@@ -43,8 +41,7 @@ export async function generatePageMetadata({
 			},
 		},
 		openGraph: {
-			title: t("title"),
-			description: t("description"),
+			title: METADATA.title,
 			url,
 			siteName: "Rename.Tools",
 			locale: LOCALE,
@@ -60,8 +57,7 @@ export async function generatePageMetadata({
 		},
 		twitter: {
 			card: "summary_large_image",
-			title: t("title"),
-			description: t("description"),
+			title: METADATA.title,
 			images: [imageUrl],
 		},
 	};

@@ -1,6 +1,5 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 import { FilePanel } from "@/components/rename/FilePanel";
@@ -13,8 +12,6 @@ import { usePresetsStore } from "@/hooks/usePresetsStore";
 import { useRenameStore } from "@/hooks/useRenameStore";
 
 export default function RenameAppPage() {
-	const tPresets = useTranslations("rename.presets");
-
 	// ── Selector-based subscriptions for granular re-renders ──
 	const {
 		files,
@@ -168,9 +165,9 @@ export default function RenameAppPage() {
 										rules.map((r) => r.ruleConfig),
 										options,
 									);
-									toast.success(tPresets("saveSuccess"), {
-										description: tPresets("saveSuccessDesc", { name }),
-									});
+									toast.success("预设已保存", {
+									description: `预设「${name}」已成功保存`,
+								});
 								}}
 								hasMetadata={hasMetadata}
 							/>

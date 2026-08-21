@@ -18,7 +18,6 @@ import {
 	Trash2,
 	Tv,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -48,9 +47,21 @@ interface Template {
 	category?: PresetCategory;
 }
 
-function useTemplates() {
-	const t = useTranslations("rename.rules.templates");
+const TEMPLATE_NAMES: Record<string, { name: string; desc: string }> = {
+	removeBrackets: { name: "删除括号及内容", desc: "删除 ()、[]、{} 及其内容" },
+	datePrefix: { name: "添加日期前缀", desc: "在文件名前添加 YYYY-MM-DD_" },
+	photoCleanup: { name: "照片文件整理", desc: "将 IMG_ 替换为 Photo_ 并添加序号" },
+	lowercaseDash: { name: "小写 + 横线", desc: "转为小写并将空格替换为横线" },
+	removeExtraSpaces: { name: "删除多余空格", desc: "合并连续空格为一个" },
+	tvShowFormat: { name: "影视剧集格式", desc: "格式化剧集编号为 S01E01 - 标题" },
+	musicFormat: { name: "音乐曲目格式", desc: "格式化曲目编号为 01. 标题" },
+	documentVersion: { name: "文档版本号", desc: "添加版本号后缀如 _v1" },
+	downloadCleanup: { name: "下载文件清理", desc: "删除 (1)、copy 和来源标签" },
+	camelToKebab: { name: "驼峰转短横线", desc: "转换为 kebab-case 格式" },
+	addBackupSuffix: { name: "添加备份后缀", desc: "在文件名后添加 _backup" },
+};
 
+function useTemplates() {
 	const templates: Template[] = [
 		{
 			id: "removeBrackets",
@@ -238,8 +249,8 @@ function useTemplates() {
 
 	return templates.map((tmpl) => ({
 		...tmpl,
-		name: t(`${tmpl.id}.name`),
-		desc: t(`${tmpl.id}.desc`),
+		name: TEMPLATE_NAMES[tmpl.id].name,
+		desc: TEMPLATE_NAMES[tmpl.id].desc,
 	}));
 }
 
@@ -249,8 +260,6 @@ interface Props {
 }
 
 export function TemplateLibrary({ onApply, trigger }: Props) {
-	const t = useTranslations("rename.rules");
-	const tPresets = useTranslations("rename.presets");
 	const templates = useTemplates();
 	const [open, setOpen] = useState(false);
 
@@ -280,7 +289,7 @@ export function TemplateLibrary({ onApply, trigger }: Props) {
 		togglePin(type, id);
 
 		// 提供简短的视觉反馈
-		const message = wasPinned ? tPresets("unpinned") : tPresets("pinned");
+		const message = wasPinned ? "已取消固定" : "已固定";
 
 		// 使用简单的临时提示
 		const toast = document.createElement("div");
@@ -311,7 +320,7 @@ export function TemplateLibrary({ onApply, trigger }: Props) {
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2">
 						<BookTemplate className="h-5 w-5" />
-						{t("templateTitle")}
+						规则模板
 					</DialogTitle>
 				</DialogHeader>
 
@@ -319,17 +328,17 @@ export function TemplateLibrary({ onApply, trigger }: Props) {
 					<TabsList className="grid w-full grid-cols-3">
 						<TabsTrigger value="pinned" className="flex items-center gap-1.5">
 							<Pin className="h-3.5 w-3.5" />
-							{tPresets("quickAccess")}
+							快速访问
 						</TabsTrigger>
-						<TabsTrigger value="system">{tPresets("systemTemplates")}</TabsTrigger>
-						<TabsTrigger value="user">{tPresets("myPresets")}</TabsTrigger>
+						<TabsTrigger value="system">系统模板</TabsTrigger>
+						<TabsTrigger value="user">我的预设</TabsTrigger>
 					</TabsList>
 
 					<TabsContent value="pinned" className="flex-1 overflow-y-auto mt-4">
 						{pinnedItems.length === 0 ? (
 							<div className="text-center py-8 text-muted-foreground text-sm">
 								<Pin className="h-8 w-8 mx-auto mb-2 opacity-30" />
-								{tPresets("noPinned")}
+								暂无固定项。固定模板或预设以便快速访问。
 							</div>
 						) : (
 							<div className="space-y-2">
@@ -382,7 +391,7 @@ export function TemplateLibrary({ onApply, trigger }: Props) {
 								<div className="relative flex-1">
 									<Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
 									<Input
-										placeholder={tPresets("searchPlaceholder")}
+										placeholder="搜索预设..."
 										value={searchQuery}
 										onChange={(e) => setSearchQuery(e.target.value)}
 										className="pl-9"
@@ -393,10 +402,10 @@ export function TemplateLibrary({ onApply, trigger }: Props) {
 										<SelectValue />
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value="recent">{tPresets("sortRecent")}</SelectItem>
-										<SelectItem value="frequent">{tPresets("sortFrequent")}</SelectItem>
-										<SelectItem value="name">{tPresets("sortName")}</SelectItem>
-										<SelectItem value="created">{tPresets("sortCreated")}</SelectItem>
+										<SelectItem value="recent">最近使用</SelectItem>
+										<SelectItem value="frequent">最常使用</SelectItem>
+										<SelectItem value="name">名称</SelectItem>
+										<SelectItem value="created">创建时间</SelectItem>
 									</SelectContent>
 								</Select>
 							</div>
@@ -410,13 +419,13 @@ export function TemplateLibrary({ onApply, trigger }: Props) {
 										<SelectValue />
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value="all">{tPresets("categoryAll")}</SelectItem>
-										<SelectItem value="photo">{tPresets("categoryPhoto")}</SelectItem>
-										<SelectItem value="document">{tPresets("categoryDocument")}</SelectItem>
-										<SelectItem value="code">{tPresets("categoryCode")}</SelectItem>
-										<SelectItem value="video">{tPresets("categoryVideo")}</SelectItem>
-										<SelectItem value="music">{tPresets("categoryMusic")}</SelectItem>
-										<SelectItem value="general">{tPresets("categoryGeneral")}</SelectItem>
+										<SelectItem value="all">全部分类</SelectItem>
+										<SelectItem value="photo">照片</SelectItem>
+										<SelectItem value="document">文档</SelectItem>
+										<SelectItem value="code">代码</SelectItem>
+										<SelectItem value="video">视频</SelectItem>
+										<SelectItem value="music">音乐</SelectItem>
+										<SelectItem value="general">通用</SelectItem>
 									</SelectContent>
 								</Select>
 
@@ -433,9 +442,9 @@ export function TemplateLibrary({ onApply, trigger }: Props) {
 										</div>
 
 										<div className="space-y-2">
-											<h3 className="text-lg font-semibold">{tPresets("noPresetsTitle")}</h3>
+											<h3 className="text-lg font-semibold">还没有预设</h3>
 											<p className="text-sm text-muted-foreground leading-relaxed">
-												{tPresets("noPresetsDesc")}
+												预设可以保存您常用的规则组合，方便快速应用到不同的文件批次。
 											</p>
 										</div>
 
@@ -446,7 +455,7 @@ export function TemplateLibrary({ onApply, trigger }: Props) {
 														<span className="text-xs font-semibold text-primary">1</span>
 													</div>
 													<span className="text-muted-foreground">
-														{tPresets("howToCreateSimple")}
+														在规则面板配置规则后点击「保存为预设」
 													</span>
 												</div>
 											</div>
@@ -508,16 +517,14 @@ function PresetCard({
 	onPin,
 	onDelete,
 }: PresetCardProps) {
-	const tPresets = useTranslations("rename.presets");
-
 	const formatLastUsed = (timestamp?: number) => {
 		if (!timestamp) return "";
 		const diff = Date.now() - timestamp;
 		const hours = Math.floor(diff / 3600000);
 		const days = Math.floor(diff / 86400000);
-		if (hours < 1) return tPresets("justNow");
-		if (hours < 24) return tPresets("hoursAgo", { hours });
-		return tPresets("daysAgo", { days });
+		if (hours < 1) return "刚刚";
+		if (hours < 24) return `${hours}小时前`;
+		return `${days}天前`;
 	};
 
 	return (
@@ -534,13 +541,13 @@ function PresetCard({
 						)}
 						<div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground/70">
 							<span>
-								{ruleCount} {ruleCount === 1 ? "rule" : "rules"}
+								{ruleCount} 条规则
 							</span>
 							{usageCount !== undefined && usageCount > 0 && (
 								<>
 									<span>·</span>
 									<span>
-										{usageCount} {tPresets("uses")}
+										{usageCount} 次使用
 									</span>
 								</>
 							)}
@@ -582,7 +589,7 @@ function PresetCard({
 							</Button>
 						)}
 						<Button variant="default" size="sm" className="h-7 px-2.5 text-xs" onClick={onApply}>
-							{tPresets("apply")}
+							应用
 						</Button>
 					</div>
 				</div>

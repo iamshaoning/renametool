@@ -12,7 +12,6 @@ import {
 	Trash2,
 	Type,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { SavePresetDialog } from "@/components/rename/SavePresetDialog";
 import { TemplateLibrary } from "@/components/rename/TemplateLibrary";
 import { Button } from "@/components/ui/button";
@@ -67,7 +66,14 @@ export function RulePanel({
 	onSavePreset,
 	hasMetadata,
 }: Props) {
-	const t = useTranslations("rename.rules");
+	const RULE_TYPE_LABELS: Record<RuleType, string> = {
+		findReplace: "查找替换",
+		insert: "添加/插入",
+		sequence: "序号",
+		caseStyle: "大小写/样式",
+		regex: "正则替换",
+		removeCleanup: "删除/清洗",
+	};
 
 	return (
 		<div className="flex h-full flex-col">
@@ -75,14 +81,14 @@ export function RulePanel({
 			<div className="panel-header border-b bg-muted/30 justify-between">
 				<div className="flex items-center gap-2">
 					<Layers className="h-4 w-4 text-primary" />
-					<h2 className="text-foreground">{t("title")}</h2>
+					<h2 className="text-foreground">规则链</h2>
 				</div>
 				<div className="flex items-center gap-1">
 					<TemplateLibrary
 						onApply={onAddRulesFromTemplate}
 						trigger={
 							<Button size="sm" variant="outline" className="gap-1 text-xs">
-								<BookTemplate className="h-3.5 w-3.5" /> {t("templateTitle")}
+								<BookTemplate className="h-3.5 w-3.5" /> 规则模板
 							</Button>
 						}
 					/>
@@ -92,13 +98,13 @@ export function RulePanel({
 								size="sm"
 								className="gap-1.5 text-xs brand-gradient text-white border-0 shadow-sm hover:shadow-md transition-shadow"
 							>
-								<Plus className="h-3.5 w-3.5" /> {t("addRule")}
+								<Plus className="h-3.5 w-3.5" /> 添加规则
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent>
 							{RULE_TYPES.map((type) => (
 								<DropdownMenuItem key={type} onClick={() => onAddRule(type)}>
-									{t(`types.${type}`)}
+									{RULE_TYPE_LABELS[type]}
 								</DropdownMenuItem>
 							))}
 						</DropdownMenuContent>
@@ -109,7 +115,7 @@ export function RulePanel({
 			{/* Extension Handling */}
 			<div className="flex items-center gap-2 border-b px-3 py-1.5 bg-muted/10">
 				<Settings2 className="h-3.5 w-3.5 text-muted-foreground" />
-				<Label className="text-xs">{t("extensionScope")}</Label>
+				<Label className="text-xs">作用域</Label>
 				<ToggleGroup
 					type="single"
 					value={extensionScope}
@@ -118,15 +124,15 @@ export function RulePanel({
 				>
 					<ToggleGroupItem value="name" className="h-7 px-2.5 text-xs gap-1">
 						<Type className="h-3.5 w-3.5" />
-						{t("scopeName")}
+						名称
 					</ToggleGroupItem>
 					<ToggleGroupItem value="extension" className="h-7 px-2.5 text-xs gap-1">
 						<FileType className="h-3.5 w-3.5" />
-						{t("scopeExtension")}
+						扩展名
 					</ToggleGroupItem>
 					<ToggleGroupItem value="full" className="h-7 px-2.5 text-xs gap-1">
 						<Maximize2 className="h-3.5 w-3.5" />
-						{t("scopeFull")}
+						全名
 					</ToggleGroupItem>
 				</ToggleGroup>
 			</div>
@@ -138,7 +144,7 @@ export function RulePanel({
 						<div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
 							<Layers className="h-6 w-6 text-muted-foreground" />
 						</div>
-						<p className="text-xs text-muted-foreground">{t("noRules")}</p>
+						<p className="text-xs text-muted-foreground">暂无规则。点击上方添加。</p>
 					</div>
 				) : (
 					<Reorder.Group
@@ -173,7 +179,7 @@ export function RulePanel({
 					onClick={onClearRules}
 					disabled={rules.length === 0}
 				>
-					<Trash2 className="h-3.5 w-3.5" /> {t("clear")}
+					<Trash2 className="h-3.5 w-3.5" /> 清除规则
 				</Button>
 				<SavePresetDialog
 					rules={rules.filter((r) => r.enabled).map((r) => r.ruleConfig)}
@@ -185,7 +191,7 @@ export function RulePanel({
 							className="gap-1 text-xs"
 							disabled={rules.length === 0}
 						>
-							<Save className="h-3.5 w-3.5" /> {t("savePreset")}
+							<Save className="h-3.5 w-3.5" /> 保存预设
 						</Button>
 					}
 				/>

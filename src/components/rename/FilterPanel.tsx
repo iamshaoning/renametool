@@ -1,7 +1,6 @@
 "use client";
 
 import { Plus, X } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -33,29 +32,27 @@ export function FilterPanel({
 	onSetLogic,
 	onClearAll,
 }: Props) {
-	const t = useTranslations("rename.filter");
-
 	const fieldOptions: { value: FilterField; label: string }[] = [
-		{ value: "name", label: t("fieldName") },
-		{ value: "extension", label: t("fieldExtension") },
-		{ value: "size", label: t("fieldSize") },
-		{ value: "modified", label: t("fieldModified") },
+		{ value: "name", label: "文件名" },
+		{ value: "extension", label: "扩展名" },
+		{ value: "size", label: "文件大小" },
+		{ value: "modified", label: "修改时间" },
 	];
 
 	const textOperators: { value: FilterOperator; label: string }[] = [
-		{ value: "contains", label: t("opContains") },
-		{ value: "notContains", label: t("opNotContains") },
-		{ value: "equals", label: t("opEquals") },
-		{ value: "notEquals", label: t("opNotEquals") },
-		{ value: "startsWith", label: t("opStartsWith") },
-		{ value: "endsWith", label: t("opEndsWith") },
-		{ value: "regex", label: t("opRegex") },
+		{ value: "contains", label: "包含" },
+		{ value: "notContains", label: "不包含" },
+		{ value: "equals", label: "等于" },
+		{ value: "notEquals", label: "不等于" },
+		{ value: "startsWith", label: "开头是" },
+		{ value: "endsWith", label: "结尾是" },
+		{ value: "regex", label: "正则匹配" },
 	];
 
 	const numberOperators: { value: FilterOperator; label: string }[] = [
-		{ value: "greaterThan", label: t("opGreaterThan") },
-		{ value: "lessThan", label: t("opLessThan") },
-		{ value: "equals", label: t("opEquals") },
+		{ value: "greaterThan", label: "大于" },
+		{ value: "lessThan", label: "小于" },
+		{ value: "equals", label: "等于" },
 	];
 
 	const getOperatorOptions = (field: FilterField) => {
@@ -68,26 +65,26 @@ export function FilterPanel({
 	const getPlaceholder = (field: FilterField) => {
 		switch (field) {
 			case "name":
-				return t("placeholderName");
+				return "输入文件名...";
 			case "extension":
-				return t("placeholderExtension");
+				return "如 jpg, png, pdf";
 			case "size":
-				return t("placeholderSize");
+				return "如 100KB, 5MB, 1GB";
 			case "modified":
-				return t("placeholderModified");
+				return "选择日期";
 			default:
-				return t("valuePlaceholder");
+				return "输入值...";
 		}
 	};
 
 	return (
 		<div className="space-y-2">
 			<div className="flex items-center justify-between mb-3">
-				<h3 className="text-sm font-medium">{t("title")}</h3>
+				<h3 className="text-sm font-medium">文件过滤</h3>
 				<div className="flex items-center gap-1">
 					{conditions.length > 0 && (
 						<Button variant="ghost" size="sm" onClick={onClearAll} className="h-7 px-2 text-xs">
-							{t("clearAll")}
+							清除全部
 						</Button>
 					)}
 					<Button
@@ -97,13 +94,13 @@ export function FilterPanel({
 						className="h-7 px-2 gap-1 text-xs"
 					>
 						<Plus className="h-3.5 w-3.5" />
-						{t("addCondition")}
+						添加条件
 					</Button>
 				</div>
 			</div>
 
 			{conditions.length === 0 && (
-				<p className="text-xs text-muted-foreground py-2">{t("noConditions")}</p>
+				<p className="text-xs text-muted-foreground py-2">暂无筛选条件，点击添加</p>
 			)}
 
 			<div className="space-y-2">
@@ -112,7 +109,7 @@ export function FilterPanel({
 						<div className="flex items-center gap-2 flex-1 min-w-0">
 							{index === 0 ? (
 								<span className="text-xs text-muted-foreground w-[60px] shrink-0 text-center">
-									{t("where")}
+									条件
 								</span>
 							) : (
 								<Select value={logic} onValueChange={(v) => onSetLogic(v as "AND" | "OR")}>
@@ -120,8 +117,8 @@ export function FilterPanel({
 										<SelectValue />
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value="AND">{t("logicAnd")}</SelectItem>
-										<SelectItem value="OR">{t("logicOr")}</SelectItem>
+										<SelectItem value="AND">且</SelectItem>
+										<SelectItem value="OR">或</SelectItem>
 									</SelectContent>
 								</Select>
 							)}
@@ -185,7 +182,7 @@ export function FilterPanel({
 										className="h-3.5 w-3.5"
 									/>
 									<span className="text-xs text-muted-foreground whitespace-nowrap">
-										{t("caseSensitive")}
+										区分大小写
 									</span>
 								</div>
 							)}

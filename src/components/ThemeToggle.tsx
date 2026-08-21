@@ -1,7 +1,6 @@
 "use client";
 
 import { Moon, Sun } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,20 +12,19 @@ import {
 
 export function ThemeToggle() {
 	const { setTheme } = useTheme();
-	const t = useTranslations("header");
 
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button variant="ghost" size="icon" aria-label={t("theme")}>
+				<Button variant="ghost" size="icon" aria-label="切换主题">
 					<Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
 					<Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end">
-				<DropdownMenuItem onClick={() => setTheme("light")}>Light</DropdownMenuItem>
-				<DropdownMenuItem onClick={() => setTheme("dark")}>Dark</DropdownMenuItem>
-				<DropdownMenuItem onClick={() => setTheme("system")}>System</DropdownMenuItem>
+				<DropdownMenuItem onClick={() => setTheme("light")}>浅色</DropdownMenuItem>
+				<DropdownMenuItem onClick={() => setTheme("dark")}>深色</DropdownMenuItem>
+				<DropdownMenuItem onClick={() => setTheme("system")}>跟随系统</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>
 	);

@@ -9,7 +9,6 @@ import {
 	X,
 	XCircle,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -33,7 +32,6 @@ export function ExecutionLog({
 	onClear,
 	onConfirmActivation,
 }: Props) {
-	const t = useTranslations("rename.execute");
 	const [open, setOpen] = useState(true);
 
 	if (!progress && log.length === 0) return null;
@@ -53,7 +51,7 @@ export function ExecutionLog({
 					onClick={() => setOpen(!open)}
 				>
 					{open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
-					<span className="text-xs font-medium">{t("log")}</span>
+					<span className="text-xs font-medium">执行日志</span>
 				</Button>
 
 				<div className="flex-1">
@@ -104,7 +102,7 @@ export function ExecutionLog({
 						onClick={onConfirmActivation}
 					>
 						<MousePointerClick className="h-4 w-4" />
-						{t("activationRequired")}
+						浏览器权限已过期 — 点击此处继续重命名
 					</Button>
 				</div>
 			)}

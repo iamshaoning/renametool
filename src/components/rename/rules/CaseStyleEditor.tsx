@@ -1,4 +1,3 @@
-import { useTranslations } from "next-intl";
 import { Label } from "@/components/ui/label";
 import {
 	Select,
@@ -17,7 +16,6 @@ interface CaseStyleEditorProps {
 }
 
 export function CaseStyleEditor({ config, onChange }: CaseStyleEditorProps) {
-	const t = useTranslations("rename.rules.caseStyle");
 	const isDeveloperMode = ["camelCase", "PascalCase", "kebab-case", "snake_case"].includes(
 		config.mode,
 	);
@@ -25,7 +23,7 @@ export function CaseStyleEditor({ config, onChange }: CaseStyleEditorProps) {
 	return (
 		<div className="space-y-1.5">
 			<div className="space-y-0.5">
-				<Label className="text-[11px] text-muted-foreground">{t("mode")}</Label>
+				<Label className="text-[11px] text-muted-foreground">模式</Label>
 				<Select
 					value={config.mode}
 					onValueChange={(v) => onChange({ mode: v as CaseStyleConfig["mode"] })}
@@ -36,25 +34,25 @@ export function CaseStyleEditor({ config, onChange }: CaseStyleEditorProps) {
 					<SelectContent>
 						<SelectItem value="none">—</SelectItem>
 						<SelectGroup>
-							<SelectLabel>{t("general")}</SelectLabel>
-							<SelectItem value="uppercase">{t("uppercase")}</SelectItem>
-							<SelectItem value="lowercase">{t("lowercase")}</SelectItem>
-							<SelectItem value="titlecase">{t("titlecase")}</SelectItem>
-							<SelectItem value="sentencecase">{t("sentencecase")}</SelectItem>
+							<SelectLabel>通用</SelectLabel>
+							<SelectItem value="uppercase">全大写</SelectItem>
+							<SelectItem value="lowercase">全小写</SelectItem>
+							<SelectItem value="titlecase">首字母大写</SelectItem>
+							<SelectItem value="sentencecase">句首大写</SelectItem>
 						</SelectGroup>
 						<SelectGroup>
-							<SelectLabel>{t("developer")}</SelectLabel>
-							<SelectItem value="camelCase">{t("camelCase")}</SelectItem>
-							<SelectItem value="PascalCase">{t("PascalCase")}</SelectItem>
-							<SelectItem value="kebab-case">{t("kebab-case")}</SelectItem>
-							<SelectItem value="snake_case">{t("snake_case")}</SelectItem>
+							<SelectLabel>开发者</SelectLabel>
+							<SelectItem value="camelCase">驼峰命名</SelectItem>
+							<SelectItem value="PascalCase">帕斯卡命名</SelectItem>
+							<SelectItem value="kebab-case">短横线命名</SelectItem>
+							<SelectItem value="snake_case">下划线命名</SelectItem>
 						</SelectGroup>
 					</SelectContent>
 				</Select>
 			</div>
 			{!isDeveloperMode && (
 				<div className="space-y-0.5">
-					<Label className="text-[11px] text-muted-foreground">{t("style")}</Label>
+					<Label className="text-[11px] text-muted-foreground">样式转换</Label>
 					<Select
 						value={config.style}
 						onValueChange={(v) => onChange({ style: v as CaseStyleConfig["style"] })}
@@ -63,11 +61,11 @@ export function CaseStyleEditor({ config, onChange }: CaseStyleEditorProps) {
 							<SelectValue />
 						</SelectTrigger>
 						<SelectContent>
-							<SelectItem value="none">{t("none")}</SelectItem>
-							<SelectItem value="spaceToDash">{t("spaceToDash")}</SelectItem>
-							<SelectItem value="spaceToUnderscore">{t("spaceToUnderscore")}</SelectItem>
-							<SelectItem value="dashToSpace">{t("dashToSpace")}</SelectItem>
-							<SelectItem value="underscoreToSpace">{t("underscoreToSpace")}</SelectItem>
+							<SelectItem value="none">无</SelectItem>
+							<SelectItem value="spaceToDash">空格 → 横线</SelectItem>
+							<SelectItem value="spaceToUnderscore">空格 → 下划线</SelectItem>
+							<SelectItem value="dashToSpace">横线 → 空格</SelectItem>
+							<SelectItem value="underscoreToSpace">下划线 → 空格</SelectItem>
 						</SelectContent>
 					</Select>
 				</div>

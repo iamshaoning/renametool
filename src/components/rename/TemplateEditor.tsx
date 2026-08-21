@@ -18,7 +18,6 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Type, Variable, X } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useCallback, useId, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -38,7 +37,7 @@ export interface TemplateBlock {
 interface TemplateEditorProps {
 	value: string;
 	onChange: (value: string) => void;
-	variables: { key: string; labelKey: string; category?: string }[];
+	variables: { key: string; label: string; category?: string }[];
 	placeholder?: string;
 }
 
@@ -273,15 +272,13 @@ export function TemplateEditor({ value, onChange, variables, placeholder }: Temp
 		return groups;
 	}, [variables]);
 
-	const t = useTranslations("rename.templateEditor");
-
 	return (
 		<div className="space-y-2">
 			{/* Blocks area - main editor */}
 			<div className="min-h-[40px] p-2 border rounded-lg bg-muted/30 flex flex-wrap items-center gap-1.5 transition-colors focus-within:border-primary/50 focus-within:bg-background">
 				{blocks.length === 0 && !isAddingText && (
 					<span className="text-xs text-muted-foreground/60 px-1 select-none">
-						{placeholder || t("placeholder")}
+						{placeholder || "点击下方按钮添加变量或文本..."}
 					</span>
 				)}
 				<DndContext
@@ -317,7 +314,7 @@ export function TemplateEditor({ value, onChange, variables, placeholder }: Temp
 								setIsAddingText(false);
 							}
 						}}
-						placeholder={t("inputText")}
+						placeholder="输入文本..."
 					/>
 				)}
 			</div>
@@ -331,7 +328,7 @@ export function TemplateEditor({ value, onChange, variables, placeholder }: Temp
 					className="inline-flex items-center gap-1 h-6 px-2 text-[11px] font-medium text-muted-foreground hover:text-foreground bg-muted/50 hover:bg-muted border border-border rounded-md transition-colors"
 				>
 					<Type className="h-3 w-3" />
-					{t("addText")}
+					添加文本
 				</button>
 
 				{/* Common variables dropdown */}
@@ -343,7 +340,7 @@ export function TemplateEditor({ value, onChange, variables, placeholder }: Temp
 								className="inline-flex items-center gap-1 h-6 px-2 text-[11px] font-medium text-primary bg-primary/10 hover:bg-primary/15 border border-primary/20 rounded-md transition-colors"
 							>
 								<Variable className="h-3 w-3" />
-								{t("commonVars")}
+								常用变量
 							</button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="start" className="w-48">
@@ -353,7 +350,7 @@ export function TemplateEditor({ value, onChange, variables, placeholder }: Temp
 									onClick={() => handleAddVariable(v.key)}
 									className="flex items-center justify-between gap-2 cursor-pointer"
 								>
-									<span className="text-xs">{t(`variables.${v.labelKey}`)}</span>
+									<span className="text-xs">{v.label}</span>
 									<Badge variant="secondary" className="text-[10px] font-mono px-1.5 py-0">
 										{`{${v.key}}`}
 									</Badge>
@@ -372,7 +369,7 @@ export function TemplateEditor({ value, onChange, variables, placeholder }: Temp
 								className="inline-flex items-center gap-1 h-6 px-2 text-[11px] font-medium text-teal-600 dark:text-teal-400 bg-teal-500/10 hover:bg-teal-500/15 border border-teal-500/20 rounded-md transition-colors"
 							>
 								<Variable className="h-3 w-3" />
-								{t("metadata")}
+								元数据
 							</button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="start" className="w-48">
@@ -382,7 +379,7 @@ export function TemplateEditor({ value, onChange, variables, placeholder }: Temp
 									onClick={() => handleAddVariable(v.key)}
 									className="flex items-center justify-between gap-2 cursor-pointer"
 								>
-									<span className="text-xs">{t(`variables.${v.labelKey}`)}</span>
+									<span className="text-xs">{v.label}</span>
 									<Badge variant="secondary" className="text-[10px] font-mono px-1.5 py-0">
 										{`{${v.key}}`}
 									</Badge>
@@ -395,7 +392,7 @@ export function TemplateEditor({ value, onChange, variables, placeholder }: Temp
 				{/* Preview hint */}
 				{blocks.length > 0 && (
 					<span className="ml-auto text-[10px] text-muted-foreground/60 select-none">
-						{t("dragHint")}
+						拖拽调整顺序
 					</span>
 				)}
 			</div>
@@ -404,21 +401,21 @@ export function TemplateEditor({ value, onChange, variables, placeholder }: Temp
 }
 
 export const COMMON_VARIABLES = [
-	{ key: "name", labelKey: "name", category: "common" },
-	{ key: "n", labelKey: "n", category: "common" },
-	{ key: "date", labelKey: "date", category: "common" },
-	{ key: "time", labelKey: "time", category: "common" },
-	{ key: "datetime", labelKey: "datetime", category: "common" },
-	{ key: "timestamp", labelKey: "timestamp", category: "common" },
-	{ key: "folderName", labelKey: "folderName", category: "common" },
+	{ key: "name", label: "原文件名", category: "common" },
+	{ key: "n", label: "序号", category: "common" },
+	{ key: "date", label: "日期", category: "common" },
+	{ key: "time", label: "时间", category: "common" },
+	{ key: "datetime", label: "日期时间", category: "common" },
+	{ key: "timestamp", label: "时间戳", category: "common" },
+	{ key: "folderName", label: "文件夹名", category: "common" },
 ];
 
 export const METADATA_VARIABLES = [
-	{ key: "exif.date", labelKey: "exifDate", category: "metadata" },
-	{ key: "exif.camera", labelKey: "exifCamera", category: "metadata" },
-	{ key: "media.artist", labelKey: "mediaArtist", category: "metadata" },
-	{ key: "media.title", labelKey: "mediaTitle", category: "metadata" },
-	{ key: "media.album", labelKey: "mediaAlbum", category: "metadata" },
-	{ key: "media.year", labelKey: "mediaYear", category: "metadata" },
-	{ key: "media.track", labelKey: "mediaTrack", category: "metadata" },
+	{ key: "exif.date", label: "EXIF日期", category: "metadata" },
+	{ key: "exif.camera", label: "相机型号", category: "metadata" },
+	{ key: "media.artist", label: "艺术家", category: "metadata" },
+	{ key: "media.title", label: "标题", category: "metadata" },
+	{ key: "media.album", label: "专辑", category: "metadata" },
+	{ key: "media.year", label: "年份", category: "metadata" },
+	{ key: "media.track", label: "曲目号", category: "metadata" },
 ];

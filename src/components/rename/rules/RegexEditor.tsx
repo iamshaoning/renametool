@@ -1,4 +1,3 @@
-import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { RegexConfig } from "@/lib/rename/types";
@@ -9,11 +8,10 @@ interface RegexEditorProps {
 }
 
 export function RegexEditor({ config, onChange }: RegexEditorProps) {
-	const t = useTranslations("rename.rules.regex");
 	return (
 		<div className="space-y-1.5">
 			<div className="space-y-0.5">
-				<Label className="text-[11px] text-muted-foreground">{t("pattern")}</Label>
+				<Label className="text-[11px] text-muted-foreground">正则表达式</Label>
 				<Input
 					className="h-7 text-xs font-mono"
 					value={config.pattern}
@@ -21,7 +19,7 @@ export function RegexEditor({ config, onChange }: RegexEditorProps) {
 				/>
 			</div>
 			<div className="space-y-0.5">
-				<Label className="text-[11px] text-muted-foreground">{t("replacement")}</Label>
+				<Label className="text-[11px] text-muted-foreground">替换为</Label>
 				<Input
 					className="h-7 text-xs font-mono"
 					value={config.replacement}
@@ -30,7 +28,7 @@ export function RegexEditor({ config, onChange }: RegexEditorProps) {
 			</div>
 			<div className="space-y-0.5">
 				<Label className="text-[11px] text-muted-foreground">
-					{t("flags")} <span className="opacity-60">({t("flagsHint")})</span>
+					标志 <span className="opacity-60">(如 g, i, m)</span>
 				</Label>
 				<Input
 					className="h-7 text-xs font-mono w-20"

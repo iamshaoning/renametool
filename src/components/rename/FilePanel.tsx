@@ -10,7 +10,6 @@ import {
 	Trash2,
 	Upload,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FileTree } from "@/components/rename/FileTree";
 import { FilterPanel } from "@/components/rename/FilterPanel";
@@ -76,7 +75,6 @@ export function FilePanel({
 	metadataProgress,
 	hasMetadata,
 }: Props) {
-	const t = useTranslations("rename.files");
 	const [apiSupported, setApiSupported] = useState(false);
 	const [filterOpen, setFilterOpen] = useState(false);
 	const [isLoadingFiles, setIsLoadingFiles] = useState(false);
@@ -217,7 +215,7 @@ export function FilePanel({
 		<div className="flex h-full flex-col border-r">
 			{/* Panel Header + Import Buttons */}
 			<div className="border-b bg-muted/20 px-3 py-3 flex items-center gap-2">
-				<h2 className="text-sm font-medium text-foreground">{t("title")}</h2>
+				<h2 className="text-sm font-medium text-foreground">文件列表</h2>
 				<div className="ml-auto flex items-center gap-1">
 					{apiSupported && (
 						<>
@@ -228,7 +226,7 @@ export function FilePanel({
 									</Button>
 								</TooltipTrigger>
 								<TooltipContent>
-									<p>{t("importFiles")}</p>
+									<p>导入文件</p>
 								</TooltipContent>
 							</Tooltip>
 							<Tooltip>
@@ -243,7 +241,7 @@ export function FilePanel({
 									</Button>
 								</TooltipTrigger>
 								<TooltipContent>
-									<p>{t("importFolder")}</p>
+									<p>导入文件夹</p>
 								</TooltipContent>
 							</Tooltip>
 						</>
@@ -268,8 +266,8 @@ export function FilePanel({
 							<TooltipContent>
 								<p>
 									{metadataProgress?.state === "loading"
-										? `${t("loadingMetadata")} (${metadataProgress.current}/${metadataProgress.total})`
-										: t("loadMetadata")}
+										? `正在加载元数据 (${metadataProgress.current}/${metadataProgress.total})`
+										: "加载文件元数据（EXIF、音频标签）"}
 								</p>
 							</TooltipContent>
 						</Tooltip>
@@ -282,7 +280,7 @@ export function FilePanel({
 								</Button>
 							</TooltipTrigger>
 							<TooltipContent>
-								<p>{t("clear")}</p>
+								<p>清空</p>
 							</TooltipContent>
 						</Tooltip>
 					)}
@@ -292,7 +290,7 @@ export function FilePanel({
 			{/* Drop Zone & File List */}
 			<section
 				ref={dropRef}
-				aria-label={t("title")}
+				aria-label="文件列表"
 				className={`flex-1 min-h-0 flex flex-col transition-all duration-200 ${
 					dragging ? "bg-primary/5 ring-2 ring-inset ring-primary/30" : ""
 				}`}
@@ -333,7 +331,7 @@ export function FilePanel({
 										checked={filteredFiles.length > 0 && selectedCount === filteredFiles.length}
 										onCheckedChange={() => {}}
 									/>
-									{selectedCount === filteredFiles.length ? t("deselectAll") : t("selectAll")}
+									{selectedCount === filteredFiles.length ? "取消全选" : "全选"}
 								</div>
 							)}
 
@@ -349,7 +347,7 @@ export function FilePanel({
 								<DropdownMenuTrigger asChild>
 									<Button size="sm" variant="outline" className="gap-1.5 text-xs h-7">
 										<ArrowDownAZ className="h-3.5 w-3.5" />
-										{t("sort")}
+										排序
 									</Button>
 								</DropdownMenuTrigger>
 								<DropdownMenuContent align="end" className="w-48">
@@ -358,19 +356,19 @@ export function FilePanel({
 										onValueChange={(v) => onSortFiles(v as SortMode)}
 									>
 										<DropdownMenuRadioItem value="import">
-											{t("sortByImport")}
+											按导入顺序
 										</DropdownMenuRadioItem>
 										<DropdownMenuRadioItem value="name-asc">
-											{t("sortByNameAsc")}
+											名称 A-Z
 										</DropdownMenuRadioItem>
 										<DropdownMenuRadioItem value="name-desc">
-											{t("sortByNameDesc")}
+											名称 Z-A
 										</DropdownMenuRadioItem>
 										<DropdownMenuRadioItem value="ext-asc">
-											{t("sortByExtAsc")}
+											按扩展名 A-Z
 										</DropdownMenuRadioItem>
 										<DropdownMenuRadioItem value="ext-desc">
-											{t("sortByExtDesc")}
+											按扩展名 Z-A
 										</DropdownMenuRadioItem>
 									</DropdownMenuRadioGroup>
 								</DropdownMenuContent>
@@ -384,7 +382,7 @@ export function FilePanel({
 										className="gap-1.5 text-xs h-7 relative"
 									>
 										<Filter className="h-3.5 w-3.5" />
-										{t("filter")}
+										筛选
 										{hasActiveFilter && (
 											<Badge
 												variant="secondary"
@@ -418,8 +416,8 @@ export function FilePanel({
 							<Loader2 className="h-8 w-8 animate-spin text-primary" />
 							<p className="text-sm text-muted-foreground">
 								{loadingFileCount > 0
-									? t("loadingFiles", { count: loadingFileCount })
-									: t("scanningFiles")}
+									? `正在加载 ${loadingFileCount} 个文件...`
+									: "正在扫描文件..."}
 							</p>
 						</div>
 					</div>
@@ -435,7 +433,7 @@ export function FilePanel({
 								<Upload className="h-6 w-6 text-primary" />
 							</div>
 							<p className="text-sm text-muted-foreground">
-								{apiSupported ? t("dropHint") : t("noFiles")}
+								{apiSupported ? "拖放文件或文件夹到此处" : "暂无文件。导入文件或文件夹以开始。"}
 							</p>
 							{apiSupported && (
 								<div className="flex gap-2 mt-2">
@@ -445,7 +443,7 @@ export function FilePanel({
 										className="gap-1.5 text-xs"
 										onClick={importFiles}
 									>
-										<FileUp className="h-3.5 w-3.5" /> {t("importFiles")}
+										<FileUp className="h-3.5 w-3.5" /> 导入文件
 									</Button>
 									<Button
 										size="sm"
@@ -453,7 +451,7 @@ export function FilePanel({
 										className="gap-1.5 text-xs"
 										onClick={importFolder}
 									>
-										<FolderOpen className="h-3.5 w-3.5" /> {t("importFolder")}
+										<FolderOpen className="h-3.5 w-3.5" /> 导入文件夹
 									</Button>
 								</div>
 							)}
@@ -471,15 +469,15 @@ export function FilePanel({
 			{/* Status Bar */}
 			<div className="border-t bg-muted/20 px-3 py-1.5 text-xs text-muted-foreground flex justify-between">
 				<span>
-					{t("total")} {allFiles.length} {t("items")}
+					总计 {allFiles.length} 个
 					{hasActiveFilter && (
 						<span className="ml-1 text-primary">
-							({t("filtered")} {filteredFiles.length})
+							(已筛选 {filteredFiles.length})
 						</span>
 					)}
 				</span>
 				<span>
-					{t("selected")} {selectedCount} {t("items")}
+					已选 {selectedCount} 个
 				</span>
 			</div>
 		</div>

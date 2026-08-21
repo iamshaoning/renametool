@@ -1,7 +1,6 @@
 "use client";
 
 import { Save } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,7 +38,6 @@ interface Props {
 }
 
 export function SavePresetDialog({ rules, onSave, trigger }: Props) {
-	const t = useTranslations("rename.presets");
 	const [open, setOpen] = useState(false);
 	const [name, setName] = useState("");
 	const [description, setDescription] = useState("");
@@ -74,17 +72,17 @@ export function SavePresetDialog({ rules, onSave, trigger }: Props) {
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2">
 						<Save className="h-4 w-4" />
-						{t("saveAsPreset")}
+						保存为预设
 					</DialogTitle>
-					<DialogDescription>{t("saveDescription", { count: rules.length })}</DialogDescription>
+					<DialogDescription>将当前 {rules.length} 条规则保存为可重用预设</DialogDescription>
 				</DialogHeader>
 
 				<div className="space-y-4 py-4">
 					<div className="space-y-2">
-						<Label htmlFor="preset-name">{t("presetName")}</Label>
+						<Label htmlFor="preset-name">预设名称</Label>
 						<Input
 							id="preset-name"
-							placeholder={t("presetNamePlaceholder")}
+							placeholder="例如：照片清理工作流"
 							value={name}
 							onChange={(e) => setName(e.target.value)}
 							onKeyDown={(e) => {
@@ -97,11 +95,11 @@ export function SavePresetDialog({ rules, onSave, trigger }: Props) {
 
 					<div className="space-y-2">
 						<Label htmlFor="preset-description">
-							{t("description")} ({t("optional")})
+							描述 (可选)
 						</Label>
 						<Textarea
 							id="preset-description"
-							placeholder={t("descriptionPlaceholder")}
+							placeholder="这个预设做什么？"
 							value={description}
 							onChange={(e) => setDescription(e.target.value)}
 							rows={2}
@@ -110,44 +108,44 @@ export function SavePresetDialog({ rules, onSave, trigger }: Props) {
 
 					<div className="space-y-2">
 						<Label htmlFor="preset-category">
-							{t("category")} ({t("optional")})
+							分类 (可选)
 						</Label>
 						<Select value={category} onValueChange={(v) => setCategory(v as PresetCategory)}>
 							<SelectTrigger id="preset-category">
-								<SelectValue placeholder={t("selectCategory")} />
+								<SelectValue placeholder="选择分类" />
 							</SelectTrigger>
 							<SelectContent>
-								<SelectItem value="photo">{t("categoryPhoto")}</SelectItem>
-								<SelectItem value="document">{t("categoryDocument")}</SelectItem>
-								<SelectItem value="code">{t("categoryCode")}</SelectItem>
-								<SelectItem value="video">{t("categoryVideo")}</SelectItem>
-								<SelectItem value="music">{t("categoryMusic")}</SelectItem>
-								<SelectItem value="general">{t("categoryGeneral")}</SelectItem>
+								<SelectItem value="photo">照片</SelectItem>
+								<SelectItem value="document">文档</SelectItem>
+								<SelectItem value="code">代码</SelectItem>
+								<SelectItem value="video">视频</SelectItem>
+								<SelectItem value="music">音乐</SelectItem>
+								<SelectItem value="general">通用</SelectItem>
 							</SelectContent>
 						</Select>
 					</div>
 
 					<div className="space-y-2">
 						<Label htmlFor="preset-tags">
-							{t("tags")} ({t("optional")})
+							标签 (可选)
 						</Label>
 						<Input
 							id="preset-tags"
-							placeholder={t("tagsPlaceholder")}
+							placeholder="照片, 清理, 批量"
 							value={tagsInput}
 							onChange={(e) => setTagsInput(e.target.value)}
 						/>
-						<p className="text-xs text-muted-foreground">{t("tagsHint")}</p>
+						<p className="text-xs text-muted-foreground">用逗号分隔标签</p>
 					</div>
 				</div>
 
 				<DialogFooter>
 					<Button variant="outline" onClick={() => setOpen(false)}>
-						{t("cancel")}
+						取消
 					</Button>
 					<Button onClick={handleSave} disabled={!name.trim()}>
 						<Save className="h-4 w-4 mr-1.5" />
-						{t("save")}
+						保存
 					</Button>
 				</DialogFooter>
 			</DialogContent>

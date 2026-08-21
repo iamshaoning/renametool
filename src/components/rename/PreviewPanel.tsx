@@ -12,7 +12,6 @@ import {
 	Sparkles,
 	Undo2,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import React, { useMemo, useState } from "react";
 import { ExecutionLog } from "@/components/rename/ExecutionLog";
 import {
@@ -185,8 +184,6 @@ const PreviewFileItem = React.memo(function PreviewFileItem({
 	item: PreviewResult;
 	depth?: number;
 }) {
-	const t = useTranslations("rename.preview");
-
 	// 只计算一次 charDiff，供 DiffOriginal 和 DiffNew 共用
 	const segments = useMemo(
 		() => (item.hasChange ? charDiff(item.original, item.newName) : []),
@@ -249,7 +246,7 @@ const PreviewFileItem = React.memo(function PreviewFileItem({
 					<Tooltip>
 						<TooltipTrigger asChild>
 							<Badge variant="destructive" className="text-[10px] py-0 shrink-0">
-								{item.error || t("conflicts")}
+								{item.error || "冲突"}
 							</Badge>
 						</TooltipTrigger>
 						{item.errorDetail && (
@@ -353,8 +350,6 @@ export function PreviewPanel({
 	canUndo,
 	canRedo,
 }: Props) {
-	const t = useTranslations("rename.preview");
-	const tExecute = useTranslations("rename.execute");
 	const [filter, setFilter] = useState<Filter>("all");
 	const [warningChecked, setWarningChecked] = useState(false);
 
@@ -364,11 +359,11 @@ export function PreviewPanel({
 	const displayed = filter === "all" ? preview : filter === "affected" ? affected : conflicts;
 
 	const filters: { key: Filter; label: string; count: number }[] = [
-		{ key: "all", label: t("showAll"), count: preview.length },
-		{ key: "affected", label: t("showAffected"), count: affected.length },
+		{ key: "all", label: "全部", count: preview.length },
+		{ key: "affected", label: "仅受影响", count: affected.length },
 		{
 			key: "conflicts",
-			label: t("showConflicts"),
+			label: "仅冲突",
 			count: conflicts.length,
 		},
 	];
@@ -387,7 +382,7 @@ export function PreviewPanel({
 			<div className="panel-header border-b bg-muted/30 px-4 flex items-center justify-between py-3!">
 				<div className="flex items-center gap-2">
 					<Eye className="h-4 w-4 text-primary" />
-					<h2 className="text-foreground">{t("title")}</h2>
+					<h2 className="text-foreground">预览</h2>
 					{conflicts.length > 0 && applyAutoFix && (
 						<div className="flex gap-1.5 ml-1">
 							{!hasAutoFix ? (
@@ -399,7 +394,7 @@ export function PreviewPanel({
 									className="h-6 px-2 text-xs gap-1.5"
 								>
 									<Sparkles className="h-3 w-3" />
-									{t("autoFix")}
+									自动修复
 								</Button>
 							) : (
 								<Button
@@ -410,7 +405,7 @@ export function PreviewPanel({
 									className="h-6 px-2 text-xs gap-1.5"
 								>
 									<RotateCcw className="h-3 w-3" />
-									{t("resetAutoFix")}
+									重置修复
 								</Button>
 							)}
 						</div>
@@ -449,9 +444,9 @@ export function PreviewPanel({
 					<div className="flex items-center gap-1">
 						<span className="w-3.5" />
 					</div>
-					<div>{t("original")}</div>
-					<div className="text-center w-8">{t("arrow")}</div>
-					<div>{t("newName")}</div>
+					<div>原始名</div>
+					<div className="text-center w-8">→</div>
+					<div>新名称</div>
 				</div>
 			</div>
 
@@ -462,7 +457,7 @@ export function PreviewPanel({
 						{displayed.length === 0 ? (
 							<div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
 								<Eye className="h-8 w-8 text-muted-foreground/30 mb-2" />
-								<span className="text-xs">{preview.length === 0 ? "—" : t("noConflict")}</span>
+								<span className="text-xs">{preview.length === 0 ? "—" : "无冲突"}</span>
 							</div>
 						) : !hasTree ? (
 							<div className="space-y-px">
@@ -501,9 +496,9 @@ export function PreviewPanel({
 							className="gap-1 text-xs"
 							onClick={onUndo}
 							disabled={!canUndo || isExecuting}
-							title={tExecute("undoHint")}
+							title="撤销上次批量重命名"
 						>
-							<Undo2 className="h-3.5 w-3.5" /> {tExecute("undo")}
+							<Undo2 className="h-3.5 w-3.5" /> 撤销
 						</Button>
 					)}
 					{onRedo && (
@@ -513,9 +508,9 @@ export function PreviewPanel({
 							className="gap-1 text-xs"
 							onClick={onRedo}
 							disabled={!canRedo || isExecuting}
-							title={tExecute("redoHint")}
+							title="重做上次撤销的操作"
 						>
-							<Redo2 className="h-3.5 w-3.5" /> {tExecute("redo")}
+							<Redo2 className="h-3.5 w-3.5" /> 重做
 						</Button>
 					)}
 					<AlertDialog>
@@ -526,16 +521,14 @@ export function PreviewPanel({
 								disabled={affectedCount === 0 || hasConflicts || isExecuting || isPreviewComputing}
 							>
 								<Play className="h-3.5 w-3.5" />
-								{tExecute("execute")} ({affectedCount})
+								执行重命名 ({affectedCount})
 							</button>
 						</AlertDialogTrigger>
 						<AlertDialogContent>
 							<AlertDialogHeader>
-								<AlertDialogTitle>{tExecute("confirmTitle")}</AlertDialogTitle>
+								<AlertDialogTitle>确认重命名</AlertDialogTitle>
 								<AlertDialogDescription>
-									{tExecute("confirmDesc", {
-										count: String(affectedCount),
-									})}
+									即将重命名 {affectedCount} 个文件。
 								</AlertDialogDescription>
 							</AlertDialogHeader>
 
@@ -550,13 +543,13 @@ export function PreviewPanel({
 									htmlFor="timestamp-warning"
 									className="text-xs text-muted-foreground leading-relaxed cursor-pointer"
 								>
-									{tExecute("timestampWarning")}
+									我已了解：重命名将更改文件修改时间戳
 								</label>
 							</div>
 
 							<AlertDialogFooter>
 								<AlertDialogCancel onClick={() => setWarningChecked(false)}>
-									{tExecute("cancel")}
+									取消
 								</AlertDialogCancel>
 								<AlertDialogAction
 									onClick={() => {
@@ -564,9 +557,9 @@ export function PreviewPanel({
 										setWarningChecked(false);
 									}}
 									disabled={!warningChecked}
-								>
-									{tExecute("confirm")}
-								</AlertDialogAction>
+							>
+								确认
+							</AlertDialogAction>
 							</AlertDialogFooter>
 						</AlertDialogContent>
 					</AlertDialog>

@@ -1,7 +1,6 @@
 "use client";
 
 import { Play, Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import {
 	AlertDialog,
@@ -26,7 +25,6 @@ interface Props {
 }
 
 export function ExecuteBar({ preview, isExecuting, onExecute, onClearRules }: Props) {
-	const t = useTranslations("rename.execute");
 	const [warningChecked, setWarningChecked] = useState(false);
 
 	const affectedCount = preview.filter((r) => r.hasChange).length;
@@ -36,7 +34,7 @@ export function ExecuteBar({ preview, isExecuting, onExecute, onClearRules }: Pr
 		<div className="flex items-center gap-2 border-t bg-card px-4 py-2.5 shadow-[0_-2px_10px_hsl(var(--border)/0.5)]">
 			<div className="ml-auto flex items-center gap-2">
 				<Button variant="outline" size="sm" className="gap-1 text-xs" onClick={onClearRules}>
-					<Trash2 className="h-3.5 w-3.5" /> {t("clear")}
+					<Trash2 className="h-3.5 w-3.5" /> 清除规则
 				</Button>
 
 				<AlertDialog>
@@ -47,17 +45,13 @@ export function ExecuteBar({ preview, isExecuting, onExecute, onClearRules }: Pr
 							disabled={affectedCount === 0 || hasConflicts || isExecuting}
 						>
 							<Play className="h-3.5 w-3.5" />
-							{t("execute")} ({affectedCount})
+							执行重命名 ({affectedCount})
 						</button>
 					</AlertDialogTrigger>
 					<AlertDialogContent>
 						<AlertDialogHeader>
-							<AlertDialogTitle>{t("confirmTitle")}</AlertDialogTitle>
-							<AlertDialogDescription>
-								{t("confirmDesc", {
-									count: String(affectedCount),
-								})}
-							</AlertDialogDescription>
+							<AlertDialogTitle>确认重命名</AlertDialogTitle>
+							<AlertDialogDescription>即将重命名 {affectedCount} 个文件。</AlertDialogDescription>
 						</AlertDialogHeader>
 
 						<div className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning/5 p-3">
@@ -71,13 +65,13 @@ export function ExecuteBar({ preview, isExecuting, onExecute, onClearRules }: Pr
 								htmlFor="timestamp-warning"
 								className="text-xs text-muted-foreground leading-relaxed cursor-pointer"
 							>
-								{t("timestampWarning")}
+								我已了解：重命名将更改文件修改时间戳
 							</label>
 						</div>
 
 						<AlertDialogFooter>
 							<AlertDialogCancel onClick={() => setWarningChecked(false)}>
-								{t("cancel")}
+								取消
 							</AlertDialogCancel>
 							<AlertDialogAction
 								onClick={() => {
@@ -86,7 +80,7 @@ export function ExecuteBar({ preview, isExecuting, onExecute, onClearRules }: Pr
 								}}
 								disabled={!warningChecked}
 							>
-								{t("confirm")}
+								确认
 							</AlertDialogAction>
 						</AlertDialogFooter>
 					</AlertDialogContent>

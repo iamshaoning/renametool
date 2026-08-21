@@ -1,10 +1,9 @@
 import { Reorder, useDragControls } from "framer-motion";
 import { Copy, GripVertical, Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import type { RenameRule } from "@/lib/rename/types";
+import type { RenameRule, RuleType } from "@/lib/rename/types";
 import { CaseStyleEditor } from "./CaseStyleEditor";
 import {
 	RULE_BADGE_COLORS,
@@ -20,6 +19,15 @@ import { RegexEditor } from "./RegexEditor";
 import { RemoveCleanupEditor } from "./RemoveCleanupEditor";
 import { SequenceEditor } from "./SequenceEditor";
 
+const RULE_TYPE_LABELS: Record<RuleType, string> = {
+	findReplace: "查找替换",
+	insert: "添加/插入",
+	sequence: "序号",
+	caseStyle: "大小写/样式",
+	regex: "正则替换",
+	removeCleanup: "删除/清洗",
+};
+
 interface RuleCardProps {
 	rule: RenameRule;
 	index: number;
@@ -30,7 +38,6 @@ interface RuleCardProps {
 }
 
 export function RuleCard({ rule, index, onUpdate, onRemove, onClone, hasMetadata }: RuleCardProps) {
-	const t = useTranslations("rename.rules");
 	const dragControls = useDragControls();
 	const rc = rule.ruleConfig;
 	const colorClass = RULE_COLORS[rc.type];
@@ -72,7 +79,7 @@ export function RuleCard({ rule, index, onUpdate, onRemove, onClone, hasMetadata
 						{index + 1}
 					</span>
 					<IconComponent className={`h-3.5 w-3.5 ${iconColorClass}`} />
-					<span className="text-xs font-semibold flex-1">{t(`types.${rc.type}`)}</span>
+					<span className="text-xs font-semibold flex-1">{RULE_TYPE_LABELS[rc.type]}</span>
 					<Switch
 						checked={rule.enabled}
 						onCheckedChange={(v) => onUpdate({ enabled: v })}

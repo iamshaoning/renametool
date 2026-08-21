@@ -2,7 +2,6 @@
 
 import { Moon, Settings, Sun } from "lucide-react";
 import Image from "next/image";
-import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -22,7 +21,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function RenameHeader() {
-	const t = useTranslations("rename.app");
 	const { theme, setTheme } = useTheme();
 	const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -55,7 +53,7 @@ export function RenameHeader() {
 						size="icon"
 						className="h-8 w-8 text-slate-300 hover:bg-slate-800 hover:text-slate-100"
 						onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-						aria-label={t("theme")}
+						aria-label="切换主题"
 					>
 						<Sun className="h-4 w-4 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" />
 						<Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
@@ -68,14 +66,14 @@ export function RenameHeader() {
 								variant="ghost"
 								size="icon"
 								className="h-8 w-8 text-slate-300 hover:bg-slate-800 hover:text-slate-100"
-								aria-label={t("settings")}
+								aria-label="设置"
 							>
 								<Settings className="h-4 w-4" />
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end" className="w-48">
 						<DropdownMenuItem onClick={() => setSettingsOpen(true)}>
-							{t("preferences")}
+							偏好设置
 						</DropdownMenuItem>
 						<DropdownMenuSeparator />
 					</DropdownMenuContent>
@@ -89,13 +87,13 @@ export function RenameHeader() {
 					<DialogHeader>
 						<DialogTitle className="flex items-center gap-2">
 							<Settings className="h-5 w-5 text-muted-foreground" />
-							{t("preferences")}
+							偏好设置
 						</DialogTitle>
-						<DialogDescription>{t("preferencesDesc")}</DialogDescription>
+						<DialogDescription>配置应用的全局参数和行为。</DialogDescription>
 					</DialogHeader>
 
 					<div className="space-y-6 py-4">
-						<div className="text-sm text-muted-foreground">{t("preferencesPlaceholder")}</div>
+						<div className="text-sm text-muted-foreground">更多设置选项即将推出...</div>
 					</div>
 				</DialogContent>
 			</Dialog>

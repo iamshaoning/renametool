@@ -1,4 +1,3 @@
-import { useTranslations } from "next-intl";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +9,6 @@ interface FindReplaceEditorProps {
 }
 
 export function FindReplaceEditor({ config, onChange }: FindReplaceEditorProps) {
-	const t = useTranslations("rename.rules.findReplace");
 	return (
 		<div className="space-y-1.5">
 			<div className="flex items-center gap-1.5">
@@ -19,12 +17,12 @@ export function FindReplaceEditor({ config, onChange }: FindReplaceEditorProps) 
 					onCheckedChange={(v) => onChange({ usePosition: !!v })}
 					className="h-3.5 w-3.5"
 				/>
-				<Label className="text-[11px] text-muted-foreground">{t("usePosition")}</Label>
+				<Label className="text-[11px] text-muted-foreground">按位置</Label>
 			</div>
 			{config.usePosition ? (
 				<div className="grid grid-cols-2 gap-1.5">
 					<div className="space-y-0.5">
-						<Label className="text-[11px] text-muted-foreground">{t("position")}</Label>
+						<Label className="text-[11px] text-muted-foreground">位置</Label>
 						<Input
 							className="h-7 text-xs"
 							type="number"
@@ -33,7 +31,7 @@ export function FindReplaceEditor({ config, onChange }: FindReplaceEditorProps) 
 						/>
 					</div>
 					<div className="space-y-0.5">
-						<Label className="text-[11px] text-muted-foreground">{t("count")}</Label>
+						<Label className="text-[11px] text-muted-foreground">字符数</Label>
 						<Input
 							className="h-7 text-xs"
 							type="number"
@@ -47,10 +45,10 @@ export function FindReplaceEditor({ config, onChange }: FindReplaceEditorProps) 
 							onCheckedChange={(v) => onChange({ fromEnd: !!v })}
 							className="h-3.5 w-3.5"
 						/>
-						<Label className="text-[11px] text-muted-foreground">{t("fromEnd")}</Label>
+						<Label className="text-[11px] text-muted-foreground">从尾部</Label>
 					</div>
 					<div className="col-span-2 space-y-0.5">
-						<Label className="text-[11px] text-muted-foreground">{t("replace")}</Label>
+						<Label className="text-[11px] text-muted-foreground">替换为</Label>
 						<Input
 							className="h-7 text-xs"
 							value={config.replace}
@@ -61,7 +59,7 @@ export function FindReplaceEditor({ config, onChange }: FindReplaceEditorProps) 
 			) : (
 				<div className="space-y-1.5">
 					<div className="space-y-0.5">
-						<Label className="text-[11px] text-muted-foreground">{t("find")}</Label>
+						<Label className="text-[11px] text-muted-foreground">查找</Label>
 						<Input
 							className="h-7 text-xs"
 							value={config.find}
@@ -69,7 +67,7 @@ export function FindReplaceEditor({ config, onChange }: FindReplaceEditorProps) 
 						/>
 					</div>
 					<div className="space-y-0.5">
-						<Label className="text-[11px] text-muted-foreground">{t("replace")}</Label>
+						<Label className="text-[11px] text-muted-foreground">替换为</Label>
 						<Input
 							className="h-7 text-xs"
 							value={config.replace}
@@ -83,7 +81,7 @@ export function FindReplaceEditor({ config, onChange }: FindReplaceEditorProps) 
 								onCheckedChange={(v) => onChange({ caseSensitive: !!v })}
 								className="h-3.5 w-3.5"
 							/>
-							<Label className="text-[11px] text-muted-foreground">{t("caseSensitive")}</Label>
+							<Label className="text-[11px] text-muted-foreground">区分大小写</Label>
 						</div>
 						<div className="flex items-center gap-1.5">
 							<Checkbox
@@ -91,7 +89,7 @@ export function FindReplaceEditor({ config, onChange }: FindReplaceEditorProps) 
 								onCheckedChange={(v) => onChange({ matchAll: !!v })}
 								className="h-3.5 w-3.5"
 							/>
-							<Label className="text-[11px] text-muted-foreground">{t("matchAll")}</Label>
+							<Label className="text-[11px] text-muted-foreground">全部替换</Label>
 						</div>
 					</div>
 				</div>

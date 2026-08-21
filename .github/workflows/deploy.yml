@@ -41,6 +41,27 @@ jobs:
           NEXT_PUBLIC_BASE_URL: https://iamshaoning.github.io/renametool
         run: pnpm build
 
+      - name: Create root redirect page
+        env:
+          NEXT_PUBLIC_BASE_PATH: /renametool
+          NEXT_PUBLIC_BASE_URL: https://iamshaoning.github.io/renametool
+        run: |
+          cat > out/index.html <<EOF
+          <!DOCTYPE html>
+          <html lang="zh">
+          <head>
+          <meta charset="utf-8">
+          <title>Rename.Tools - 免费在线批量重命名工具</title>
+          <meta http-equiv="refresh" content="0; url=${NEXT_PUBLIC_BASE_PATH}/zh">
+          <link rel="canonical" href="${NEXT_PUBLIC_BASE_URL}/zh/">
+          </head>
+          <body>
+          <script>window.location.replace("${NEXT_PUBLIC_BASE_PATH}/zh");</script>
+          <p><a href="${NEXT_PUBLIC_BASE_PATH}/zh">跳转到 Rename.Tools</a></p>
+          </body>
+          </html>
+          EOF
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 

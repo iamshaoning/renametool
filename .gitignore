@@ -1,18 +1,6 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # dependencies
 /node_modules
-/.pnp
 .pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
-
-# testing
-/coverage
-/test-reports
 
 # next.js
 /.next/
@@ -35,10 +23,6 @@ yarn-error.log*
 .env*
 !.env.example
 
-# cloudflare
-.open-next
-.wrangler
-
 # local pnpm cache (created during install)
 .npm-cache/
 .pnpm-store/
@@ -46,5 +30,3 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-# documentation

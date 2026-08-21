@@ -31,7 +31,7 @@ import type {
 	RuleConfig,
 	RuleType,
 } from "@/lib/rename/types";
-import { RULE_TYPES } from "./constants";
+import { RULE_TYPES, RULE_TYPE_LABELS } from "./constants";
 import { RuleCard } from "./RuleCard";
 
 interface Props {
@@ -66,15 +66,6 @@ export function RulePanel({
 	onSavePreset,
 	hasMetadata,
 }: Props) {
-	const RULE_TYPE_LABELS: Record<RuleType, string> = {
-		findReplace: "查找替换",
-		insert: "添加/插入",
-		sequence: "序号",
-		caseStyle: "大小写/样式",
-		regex: "正则替换",
-		removeCleanup: "删除/清洗",
-	};
-
 	return (
 		<div className="flex h-full flex-col">
 			{/* Panel Header */}

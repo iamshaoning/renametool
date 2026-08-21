@@ -39,7 +39,11 @@ export function ExecutionLog({
 	const successCount = log.filter((e) => e.status === "success").length;
 	const failedCount = log.filter((e) => e.status === "failed").length;
 	const skippedCount = log.filter((e) => e.status === "skipped").length;
-	const percent = progress ? Math.round((progress.current / progress.total) * 100) : 100;
+	const percent = progress
+		? progress.total > 0
+			? Math.round((progress.current / progress.total) * 100)
+			: 0
+		: 100;
 
 	return (
 		<div className="border-t bg-card">

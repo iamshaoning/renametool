@@ -12,21 +12,13 @@ import {
 	RULE_HEADER_COLORS,
 	RULE_ICON_COLORS,
 	RULE_ICONS,
+	RULE_TYPE_LABELS,
 } from "./constants";
 import { FindReplaceEditor } from "./FindReplaceEditor";
 import { InsertEditor } from "./InsertEditor";
 import { RegexEditor } from "./RegexEditor";
 import { RemoveCleanupEditor } from "./RemoveCleanupEditor";
 import { SequenceEditor } from "./SequenceEditor";
-
-const RULE_TYPE_LABELS: Record<RuleType, string> = {
-	findReplace: "查找替换",
-	insert: "添加/插入",
-	sequence: "序号",
-	caseStyle: "大小写/样式",
-	regex: "正则替换",
-	removeCleanup: "删除/清洗",
-};
 
 interface RuleCardProps {
 	rule: RenameRule;

@@ -1,183 +1,66 @@
 <div align="center">
 
-# Rename.Tools
+# 批量重命名
 
-**A powerful browser-based batch file renaming tool.**
+**浏览器端批量文件重命名工具**
 
-Regex, rule chains, live preview — all processed locally for total privacy.
+支持规则链、实时预览 — 所有操作本地完成，文件不上传，保护隐私。
 
-[![GitHub License](https://img.shields.io/github/license/chenz24/rename.tools)](https://github.com/chenz24/rename.tools/blob/main/LICENSE)
-[![GitHub Stars](https://img.shields.io/github/stars/chenz24/rename.tools)](https://github.com/chenz24/rename.tools)
-
-[Live Demo](https://rename.tools) · [Report Bug](https://github.com/chenz24/rename.tools/issues) · [Request Feature](https://github.com/chenz24/rename.tools/issues)
-
-English | [简体中文](./README_zh.md)
+在线使用：[https://iamshaoning.github.io/renametool](https://iamshaoning.github.io/renametool)
 
 </div>
 
 ---
 
-## ✨ Features
+## ✨ 功能特性
 
-- **100% Local Processing** — Files never leave your device. All operations run in-browser via File System Access API.
-- **Rule Chains** — Combine multiple rename rules (Find & Replace, Regex, Sequence, Case/Style, Custom JS) in sequence.
-- **Live Preview** — See changes instantly as you configure rules. Conflicts are detected before execution.
-- **Metadata Support** — Extract EXIF data from images and audio tags from music files for smart renaming.
-- **TV Show Scraper** — Auto-match video files with show/episode info from TMDb (requires internet and a TMDb API key).
-- **Export Scripts** — Generate bash or PowerShell scripts for offline execution.
-- **Undo Support** — Built-in undo in the UI, plus exportable undo scripts for command-line rollback.
-- **Works Offline** — No internet needed after initial page load. (Note: TV show scraping requires internet and a TMDb API key)
-- **Multi-language** — English and Chinese supported.
+- **100% 本地处理** — 文件通过浏览器 File System Access API 访问，从不离开设备
+- **规则链** — 组合多个重命名规则（查找替换、正则替换、插入、序号、大小写/样式、删除/清洗）依次执行
+- **实时预览** — 配置规则时即时查看变更，执行前自动检测冲突
+- **元数据支持** — 提取图片 EXIF 数据和音频标签用于重命名
+- **预设保存** — 将常用规则组合保存为预设，随时复用
+- **撤销支持** — 界面内置撤销/重做，误操作可恢复
+- **深色模式** — 支持浅色/深色/跟随系统
 
-## 🖼️ Screenshot
+## 🚀 本地开发
 
-![Rename.Tools Interface](public/screenshots/product_screenshot.png)
+### 环境要求
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js >= 20 (see `.nvmrc`)
+- Node.js >= 20
 - pnpm
 
-### Installation
+### 安装运行
 
 ```bash
-# Clone the repository
-git clone https://github.com/chenz24/rename.tools.git
-cd rename.tools
-
-# Install dependencies
+# 安装依赖
 pnpm install
 
-# Copy environment variables
-cp .env.example .env.local
-
-# Start development server
+# 启动开发服务器
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see the app.
+打开 [http://localhost:3000](http://localhost:3000) 查看应用。
 
-## 🛠️ Tech Stack
+## 📦 脚本命令
 
-| Category | Technology |
-|----------|------------|
-| **Framework** | [Next.js 16](https://nextjs.org) (App Router, Turbopack) |
-| **UI** | [React 19](https://react.dev), [Tailwind CSS 4](https://tailwindcss.com), [shadcn/ui](https://ui.shadcn.com) |
-| **State** | [Zustand](https://zustand-demo.pmnd.rs/) |
-| **Drag & Drop** | [@dnd-kit](https://dndkit.com/) |
-| **Metadata** | [exifr](https://github.com/MikeKovaworker/exifr), [music-metadata-browser](https://github.com/Borewit/music-metadata-browser) |
-| **i18n** | [next-intl](https://next-intl.dev) |
-| **Linting** | [Biome](https://biomejs.dev) |
-| **Language** | TypeScript |
+| 命令 | 描述 |
+|------|------|
+| `pnpm dev` | 启动开发服务器 |
+| `pnpm build` | 生产环境构建（静态导出到 out/） |
+| `pnpm lint` | 使用 Biome 检查代码 |
+| `pnpm format` | 使用 Biome 格式化代码 |
 
-## 📖 Usage
+## 🔒 隐私保护
 
-### Quick Start
+- **无上传** — 文件通过浏览器 API 访问，从不传输
+- **无服务端处理** — 所有重命名逻辑在客户端运行
+- **无数据留存** — 关闭标签页后一切消失
+- **无账号** — 无需注册、无追踪
 
-1. **Import Files** — Drag & drop files/folders or use the file picker
-2. **Add Rules** — Build a rule chain with multiple rename operations
-3. **Preview** — Review changes in real-time with conflict detection
-4. **Execute** — Rename files directly on your device
+## 📄 许可证
 
-### Available Rule Types
-
-| Rule | Description |
-|------|-------------|
-| **Find & Replace** | Text replacement with case sensitivity and position options |
-| **Regex Replace** | Full regex support with capture groups and backreferences |
-| **Add/Insert** | Insert text at start, end, or specific position |
-| **Sequence** | Auto-numbering with custom start, step, and padding |
-| **Case/Style** | UPPERCASE, lowercase, Title Case, kebab-case, etc. |
-| **Remove/Cleanup** | Remove characters by count, range, or type (digits, symbols, etc.) |
-| **Custom JS** | Write your own transform function |
-
-### Template Variables
-
-Use variables in Insert rules:
-
-- `{name}` — Original filename
-- `{n}` — Sequence number
-- `{date}`, `{time}`, `{datetime}` — Current date/time
-- `{exifDate}`, `{exifCamera}` — EXIF metadata
-- `{mediaArtist}`, `{mediaTitle}`, `{mediaAlbum}` — Audio tags
-
-## 🌐 Browser Support
-
-| Browser | Direct Rename | Export Scripts |
-|---------|--------------|----------------|
-| Chrome / Edge / Brave / Arc | ✅ | ✅ |
-| Firefox / Safari | ❌ | ✅ |
-
-> Direct renaming requires the File System Access API (Chromium-based browsers). Other browsers can use sample test mode or export scripts.
-
-## 📦 Scripts
-
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Start dev server with Turbopack |
-| `pnpm build` | Build for production |
-| `pnpm start` | Start production server |
-| `pnpm lint` | Lint with Biome |
-| `pnpm format` | Format with Biome |
-| `pnpm check` | Lint + format (auto-fix) |
-
-## 🔒 Privacy
-
-Rename.Tools is built with a **privacy-first architecture**:
-
-- **No uploads** — Files are accessed via browser APIs, never transmitted
-- **No server processing** — All rename logic runs client-side
-- **No data retention** — Close the tab and everything is gone
-- **No accounts** — No sign-up, no tracking, no analytics on your files
-
-## ❓ FAQ
-
-**Is Rename.Tools really free?**
-Yes, completely free and open source. There are no premium tiers, no trials, and no hidden fees.
-
-**Do my files get uploaded to a server?**
-No. Rename.Tools runs entirely in your browser. Your files are accessed through the File System Access API and never leave your device.
-
-**What browsers are supported?**
-Rename.Tools works best in Chromium-based browsers (Chrome, Edge, Brave, Arc). Firefox and Safari can use sample test mode or export scripts.
-
-**Can I undo a rename operation?**
-Yes. Rename.Tools provides a built-in undo button in the interface to reverse your last rename operation. You can also export an undo script for command-line reversal if needed.
-
-**How many files can it handle?**
-Rename.Tools can handle thousands of files in a single batch. Performance depends on your browser and device capabilities.
-
-**Does it work completely offline?**
-Most features work offline after initial page load. However, the TV show scraping feature requires internet access and a TMDb API key to query the TMDb API.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the AGPL-3.0 License — see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- [shadcn/ui](https://ui.shadcn.com) for the beautiful components
-- [TMDb](https://www.themoviedb.org) for TV show data API
-- All contributors who help improve this project
+本项目采用 [AGPL-3.0](LICENSE) 许可证。
 
 ---
 
-<div align="center">
-
-**[⬆ Back to Top](#renametools)**
-
-Made with ❤️ by [chenz24](https://github.com/chenz24)
-
-</div>
+本项目基于 [rename.tools](https://github.com/chenz24/rename.tools) 精简修改，仅保留中文语言与核心重命名功能。

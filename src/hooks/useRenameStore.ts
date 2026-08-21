@@ -309,12 +309,7 @@ interface RenameState {
 	setExtensionScope: (scope: ExtensionScope) => void;
 
 	// Metadata
-	updateFileMetadata: (
-		id: string,
-		metadata: FileMetadata | null,
-		state: MetadataLoadState,
-		error?: string,
-	) => void;
+	updateFileMetadata: (id: string, metadata: FileMetadata | null, state: MetadataLoadState) => void;
 
 	// Filter
 	addFilterCondition: () => void;
@@ -344,7 +339,13 @@ function recomputeDerived(
 	const basePreview = derivePreview(filteredFiles, state.rules, state.extensionScope);
 	const preview = state._previewOverride || basePreview;
 	const hasMetadata = deriveHasMetadata(state.files);
-	return { filteredFiles, _basePreview: basePreview, preview, hasMetadata, isPreviewComputing: false };
+	return {
+		filteredFiles,
+		_basePreview: basePreview,
+		preview,
+		hasMetadata,
+		isPreviewComputing: false,
+	};
 }
 
 // Batch UI update interval for execute / undo / redo
@@ -550,7 +551,7 @@ export const useRenameStore = create<RenameState>()((set, get) => {
 
 		// ── Metadata ──
 
-		updateFileMetadata: (id, metadata, state_arg, _error?) =>
+		updateFileMetadata: (id, metadata, state_arg) =>
 			setAndQueuePreview((state) => {
 				const files = state.files.map((f) =>
 					f.id === id ? { ...f, metadata: metadata ?? f.metadata, metadataState: state_arg } : f,

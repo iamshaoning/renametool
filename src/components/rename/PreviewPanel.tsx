@@ -62,32 +62,6 @@ interface PreviewTreeNode {
 	children: Map<string, PreviewTreeNode>;
 }
 
-function _truncateMiddle(text: string, maxLength: number = 60): string {
-	if (text.length <= maxLength) return text;
-
-	const lastDotIndex = text.lastIndexOf(".");
-	const hasExtension = lastDotIndex > 0 && lastDotIndex > text.length - 10;
-
-	if (hasExtension) {
-		const extension = text.slice(lastDotIndex);
-		const nameWithoutExt = text.slice(0, lastDotIndex);
-		const availableLength = maxLength - extension.length - 3;
-
-		if (availableLength <= 10) {
-			return `${text.slice(0, maxLength - 3)}...`;
-		}
-
-		const startLength = Math.ceil(availableLength * 0.6);
-		const endLength = Math.floor(availableLength * 0.4);
-
-		return `${nameWithoutExt.slice(0, startLength)}...${nameWithoutExt.slice(-endLength)}${extension}`;
-	} else {
-		const startLength = Math.ceil((maxLength - 3) * 0.6);
-		const endLength = Math.floor((maxLength - 3) * 0.4);
-		return `${text.slice(0, startLength)}...${text.slice(-endLength)}`;
-	}
-}
-
 function DiffOriginal({ segments }: { segments: DiffSegment[] }) {
 	return (
 		<span>
@@ -457,7 +431,7 @@ export function PreviewPanel({
 						{displayed.length === 0 ? (
 							<div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
 								<Eye className="h-8 w-8 text-muted-foreground/30 mb-2" />
-								<span className="text-xs">{preview.length === 0 ? "—" : "无冲突"}</span>
+								<span className="text-xs">{preview.length === 0 ? "—" : "无匹配项"}</span>
 							</div>
 						) : !hasTree ? (
 							<div className="space-y-px">
@@ -527,9 +501,7 @@ export function PreviewPanel({
 						<AlertDialogContent>
 							<AlertDialogHeader>
 								<AlertDialogTitle>确认重命名</AlertDialogTitle>
-								<AlertDialogDescription>
-									即将重命名 {affectedCount} 个文件。
-								</AlertDialogDescription>
+								<AlertDialogDescription>即将重命名 {affectedCount} 个文件。</AlertDialogDescription>
 							</AlertDialogHeader>
 
 							<div className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning/5 p-3">
@@ -548,18 +520,16 @@ export function PreviewPanel({
 							</div>
 
 							<AlertDialogFooter>
-								<AlertDialogCancel onClick={() => setWarningChecked(false)}>
-									取消
-								</AlertDialogCancel>
+								<AlertDialogCancel onClick={() => setWarningChecked(false)}>取消</AlertDialogCancel>
 								<AlertDialogAction
 									onClick={() => {
 										onExecute();
 										setWarningChecked(false);
 									}}
 									disabled={!warningChecked}
-							>
-								确认
-							</AlertDialogAction>
+								>
+									确认
+								</AlertDialogAction>
 							</AlertDialogFooter>
 						</AlertDialogContent>
 					</AlertDialog>

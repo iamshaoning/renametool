@@ -63,3 +63,12 @@ export const RULE_BADGE_COLORS: Record<RuleType, string> = {
 	regex: "bg-rose-500",
 	removeCleanup: "bg-orange-500",
 };
+
+export const RULE_TYPE_LABELS: Record<RuleType, string> = {
+	findReplace: "查找替换",
+	insert: "添加/插入",
+	sequence: "序号",
+	caseStyle: "大小写/样式",
+	regex: "正则替换",
+	removeCleanup: "删除/清洗",
+};

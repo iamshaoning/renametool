@@ -141,8 +141,7 @@ function MediaMetadataView({ data }: { data: MediaMetadata }) {
 }
 
 export function MetadataViewer({ metadata }: Props) {
-	const icon = metadata.kind === "image" ? Image : Music;
-	const Icon = icon;
+	const Icon = metadata.kind === "image" ? Image : Music;
 
 	return (
 		<Popover>

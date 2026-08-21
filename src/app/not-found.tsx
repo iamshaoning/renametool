@@ -17,7 +17,7 @@ export default function NotFound() {
 				<h1 style={{ fontSize: 48, margin: 0 }}>404</h1>
 				<p style={{ fontSize: 18, color: "#b8c2d6" }}>页面不存在</p>
 				<a
-					href="/"
+					href={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/`}
 					style={{
 						marginTop: 16,
 						padding: "10px 20px",

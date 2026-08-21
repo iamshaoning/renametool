@@ -30,6 +30,31 @@ import type { MetadataLoadProgress } from "@/hooks/useMetadataLoader";
 import type { SortMode } from "@/hooks/useRenameStore";
 import type { FileEntry, FilterCondition } from "@/lib/rename/types";
 
+// 递归遍历目录，收集文件名、句柄和相对路径
+async function walkDirectory(
+	dirHandle: FileSystemDirectoryHandle,
+	prefix: string,
+	names: string[],
+	handles: FileSystemFileHandle[],
+	paths: string[],
+) {
+	for await (const entry of (dirHandle as any).values()) {
+		if (entry.kind === "file") {
+			names.push(entry.name);
+			handles.push(entry);
+			paths.push(prefix ? `${prefix}/${entry.name}` : entry.name);
+		} else if (entry.kind === "directory") {
+			await walkDirectory(
+				entry,
+				prefix ? `${prefix}/${entry.name}` : entry.name,
+				names,
+				handles,
+				paths,
+			);
+		}
+	}
+}
+
 interface Props {
 	allFiles: FileEntry[];
 	filteredFiles: FileEntry[];
@@ -114,19 +139,7 @@ export function FilePanel({
 			setIsLoadingFiles(true);
 
 			try {
-				async function walkDir(dir: FileSystemDirectoryHandle, prefix: string) {
-					for await (const entry of (dir as any).values()) {
-						if (entry.kind === "file") {
-							names.push(entry.name);
-							handles.push(entry);
-							paths.push(prefix ? `${prefix}/${entry.name}` : entry.name);
-						} else if (entry.kind === "directory") {
-							await walkDir(entry, prefix ? `${prefix}/${entry.name}` : entry.name);
-						}
-					}
-				}
-
-				await walkDir(dirHandle, rootFolderName);
+				await walkDirectory(dirHandle, rootFolderName, names, handles, paths);
 				setLoadingFileCount(names.length);
 				await onAddFiles(names, handles, paths);
 			} finally {
@@ -154,19 +167,6 @@ export function FilePanel({
 					const names: string[] = [];
 					const paths: string[] = [];
 
-					// Helper function to recursively walk directories
-					async function walkDirectory(dirHandle: FileSystemDirectoryHandle, prefix: string) {
-						for await (const entry of (dirHandle as any).values()) {
-							if (entry.kind === "file") {
-								handles.push(entry);
-								names.push(entry.name);
-								paths.push(prefix ? `${prefix}/${entry.name}` : entry.name);
-							} else if (entry.kind === "directory") {
-								await walkDirectory(entry, prefix ? `${prefix}/${entry.name}` : entry.name);
-							}
-						}
-					}
-
 					// Process each dropped item
 					for (const item of items) {
 						const handle = await item.getAsFileSystemHandle?.();
@@ -181,7 +181,7 @@ export function FilePanel({
 							// Directory - recursively walk it
 							const dirHandle = handle as FileSystemDirectoryHandle;
 							const rootFolderName = dirHandle.name;
-							await walkDirectory(dirHandle, rootFolderName);
+							await walkDirectory(dirHandle, rootFolderName, names, handles, paths);
 						}
 					}
 
@@ -355,21 +355,11 @@ export function FilePanel({
 										value={sortMode}
 										onValueChange={(v) => onSortFiles(v as SortMode)}
 									>
-										<DropdownMenuRadioItem value="import">
-											按导入顺序
-										</DropdownMenuRadioItem>
-										<DropdownMenuRadioItem value="name-asc">
-											名称 A-Z
-										</DropdownMenuRadioItem>
-										<DropdownMenuRadioItem value="name-desc">
-											名称 Z-A
-										</DropdownMenuRadioItem>
-										<DropdownMenuRadioItem value="ext-asc">
-											按扩展名 A-Z
-										</DropdownMenuRadioItem>
-										<DropdownMenuRadioItem value="ext-desc">
-											按扩展名 Z-A
-										</DropdownMenuRadioItem>
+										<DropdownMenuRadioItem value="import">按导入顺序</DropdownMenuRadioItem>
+										<DropdownMenuRadioItem value="name-asc">名称 A-Z</DropdownMenuRadioItem>
+										<DropdownMenuRadioItem value="name-desc">名称 Z-A</DropdownMenuRadioItem>
+										<DropdownMenuRadioItem value="ext-asc">按扩展名 A-Z</DropdownMenuRadioItem>
+										<DropdownMenuRadioItem value="ext-desc">按扩展名 Z-A</DropdownMenuRadioItem>
 									</DropdownMenuRadioGroup>
 								</DropdownMenuContent>
 							</DropdownMenu>
@@ -471,14 +461,10 @@ export function FilePanel({
 				<span>
 					总计 {allFiles.length} 个
 					{hasActiveFilter && (
-						<span className="ml-1 text-primary">
-							(已筛选 {filteredFiles.length})
-						</span>
+						<span className="ml-1 text-primary">(已筛选 {filteredFiles.length})</span>
 					)}
 				</span>
-				<span>
-					已选 {selectedCount} 个
-				</span>
+				<span>已选 {selectedCount} 个</span>
 			</div>
 		</div>
 	);

@@ -115,7 +115,7 @@ export const usePresetsStore = create<PresetsState>()(
 			},
 		}),
 		{
-			name: "renametools:presets-storage",
+			name: "batch-rename:presets-storage",
 			partialize: (state) => ({
 				presets: state.presets,
 				pinned: state.pinned,

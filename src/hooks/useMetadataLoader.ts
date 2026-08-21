@@ -24,12 +24,7 @@ export function useMetadataLoader() {
 	const loadMetadata = useCallback(
 		async (
 			files: FileEntry[],
-			onUpdate: (
-				id: string,
-				metadata: FileMetadata | null,
-				state: MetadataLoadState,
-				error?: string,
-			) => void,
+			onUpdate: (id: string, metadata: FileMetadata | null, state: MetadataLoadState) => void,
 		) => {
 			// Only load for files that have handles and haven't been loaded yet
 			const toLoad = files.filter(
@@ -60,7 +55,7 @@ export function useMetadataLoader() {
 						const metadata = await extractMetadata(actualFile);
 						onUpdate(file.id, metadata, "loaded");
 					} catch (err) {
-						onUpdate(file.id, null, "error", String(err));
+						onUpdate(file.id, null, "error");
 					}
 
 					completed++;

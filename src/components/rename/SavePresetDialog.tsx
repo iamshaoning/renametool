@@ -94,9 +94,7 @@ export function SavePresetDialog({ rules, onSave, trigger }: Props) {
 					</div>
 
 					<div className="space-y-2">
-						<Label htmlFor="preset-description">
-							描述 (可选)
-						</Label>
+						<Label htmlFor="preset-description">描述 (可选)</Label>
 						<Textarea
 							id="preset-description"
 							placeholder="这个预设做什么？"
@@ -107,9 +105,7 @@ export function SavePresetDialog({ rules, onSave, trigger }: Props) {
 					</div>
 
 					<div className="space-y-2">
-						<Label htmlFor="preset-category">
-							分类 (可选)
-						</Label>
+						<Label htmlFor="preset-category">分类 (可选)</Label>
 						<Select value={category} onValueChange={(v) => setCategory(v as PresetCategory)}>
 							<SelectTrigger id="preset-category">
 								<SelectValue placeholder="选择分类" />
@@ -126,9 +122,7 @@ export function SavePresetDialog({ rules, onSave, trigger }: Props) {
 					</div>
 
 					<div className="space-y-2">
-						<Label htmlFor="preset-tags">
-							标签 (可选)
-						</Label>
+						<Label htmlFor="preset-tags">标签 (可选)</Label>
 						<Input
 							id="preset-tags"
 							placeholder="照片, 清理, 批量"

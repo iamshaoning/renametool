@@ -160,14 +160,14 @@ export default function RenameAppPage() {
 								onSetExtensionScope={setExtensionScope}
 								onClearRules={clearRules}
 								onSavePreset={(name, options) => {
-									const _presetId = savePreset(
+									savePreset(
 										name,
-										rules.map((r) => r.ruleConfig),
+										rules.filter((r) => r.enabled).map((r) => r.ruleConfig),
 										options,
 									);
 									toast.success("预设已保存", {
-									description: `预设「${name}」已成功保存`,
-								});
+										description: `预设「${name}」已成功保存`,
+									});
 								}}
 								hasMetadata={hasMetadata}
 							/>

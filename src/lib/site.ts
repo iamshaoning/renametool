@@ -1,5 +1,5 @@
 export const SITE_URL = normalizeSiteUrl(
-	process.env.NEXT_PUBLIC_BASE_URL ?? "https://rename.tools",
+	process.env.NEXT_PUBLIC_BASE_URL ?? "https://iamshaoning.github.io/renametool",
 );
 
 // 站点根域名（不含 basePath），用于 metadataBase，避免与静态导出的 basePath 重复拼接

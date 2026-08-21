@@ -232,9 +232,9 @@ export function SequenceEditor({ config, onChange, hasMetadata }: SequenceEditor
 									<SelectValue />
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value=".">. (dot)</SelectItem>
-									<SelectItem value="-">- (dash)</SelectItem>
-									<SelectItem value="_">_ (underscore)</SelectItem>
+									<SelectItem value=".">.（点）</SelectItem>
+									<SelectItem value="-">-（横线）</SelectItem>
+									<SelectItem value="_">_（下划线）</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>

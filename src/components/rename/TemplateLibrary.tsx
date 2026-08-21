@@ -61,6 +61,9 @@ const TEMPLATE_NAMES: Record<string, { name: string; desc: string }> = {
 	addBackupSuffix: { name: "添加备份后缀", desc: "在文件名后添加 _backup" },
 };
 
+// 日期前缀在模块加载时生成一次，避免每次渲染重新求值
+const DATE_PREFIX = `${new Date().toISOString().slice(0, 10)}_`;
+
 function useTemplates() {
 	const templates: Template[] = [
 		{
@@ -86,7 +89,7 @@ function useTemplates() {
 				{
 					type: "insert",
 					config: {
-						text: `${new Date().toISOString().slice(0, 10)}_`,
+						text: DATE_PREFIX,
 						position: "start",
 						index: 0,
 					},
@@ -306,10 +309,11 @@ export function TemplateLibrary({ onApply, trigger }: Props) {
 
 	const pinnedItems = pinned
 		.map((p) => {
-			if (p.type === "system") {
-				return templates.find((t) => t.id === p.id);
-			}
-			return presets.find((pr) => pr.id === p.id);
+			const item =
+				p.type === "system"
+					? templates.find((t) => t.id === p.id)
+					: presets.find((pr) => pr.id === p.id);
+			return item ? { ...item, _pinType: p.type } : undefined;
 		})
 		.filter(Boolean);
 
@@ -343,7 +347,7 @@ export function TemplateLibrary({ onApply, trigger }: Props) {
 						) : (
 							<div className="space-y-2">
 								{pinnedItems.map((item: any) => {
-									const isSystem = "id" in item && templates.some((t) => t.id === item.id);
+									const isSystem = item._pinType === "system";
 									const presetId = item.id;
 									const pinType = isSystem ? "system" : "user";
 
@@ -359,9 +363,9 @@ export function TemplateLibrary({ onApply, trigger }: Props) {
 											tags={item.tags}
 											isPinned={true}
 											onApply={() => handleApply(item.rules, isSystem ? undefined : presetId)}
-										onPin={() => handleTogglePin(pinType, presetId)}
-										onDelete={isSystem ? undefined : () => deletePreset(presetId)}
-									/>
+											onPin={() => handleTogglePin(pinType, presetId)}
+											onDelete={isSystem ? undefined : () => deletePreset(presetId)}
+										/>
 									);
 								})}
 							</div>
@@ -540,15 +544,11 @@ function PresetCard({
 							<p className="text-xs text-muted-foreground line-clamp-1">{description}</p>
 						)}
 						<div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground/70">
-							<span>
-								{ruleCount} 条规则
-							</span>
+							<span>{ruleCount} 条规则</span>
 							{usageCount !== undefined && usageCount > 0 && (
 								<>
 									<span>·</span>
-									<span>
-										{usageCount} 次使用
-									</span>
+									<span>{usageCount} 次使用</span>
 								</>
 							)}
 							{lastUsed && (

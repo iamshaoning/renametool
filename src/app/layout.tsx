@@ -31,7 +31,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 	return (
 		<html lang="zh" suppressHydrationWarning>
 			<head>
-				<link rel="icon" href={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/logo.svg`} type="image/svg+xml" />
+				<link
+					rel="icon"
+					href={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/logo.svg`}
+					type="image/svg+xml"
+				/>
 				<link rel="apple-touch-icon" href={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/logo.svg`} />
 			</head>
 			<body

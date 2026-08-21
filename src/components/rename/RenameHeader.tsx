@@ -69,14 +69,12 @@ export function RenameHeader() {
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end" className="w-48">
-						<DropdownMenuItem onClick={() => setSettingsOpen(true)}>
-							偏好设置
-						</DropdownMenuItem>
-						<DropdownMenuSeparator />
-					</DropdownMenuContent>
-				</DropdownMenu>
-			</div>
-		</header>
+							<DropdownMenuItem onClick={() => setSettingsOpen(true)}>偏好设置</DropdownMenuItem>
+							<DropdownMenuSeparator />
+						</DropdownMenuContent>
+					</DropdownMenu>
+				</div>
+			</header>
 
 			{/* Settings Dialog (placeholder for future preferences) */}
 			<Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>

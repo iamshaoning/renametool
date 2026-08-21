@@ -9,12 +9,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
 			url: SITE_URL,
 			changeFrequency: "daily",
 			priority: 1,
-			alternates: {
-				languages: {
-					zh: SITE_URL,
-					"x-default": SITE_URL,
-				},
-			},
 		},
 	];
 }

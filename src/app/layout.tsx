@@ -1,7 +1,6 @@
 import { Geist, Geist_Mono, Noto_Sans_SC } from "next/font/google";
 import type { ReactNode } from "react";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
-import { RegisterServiceWorker } from "@/components/ServiceWorkerRegistration";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { UmamiAnalytics } from "@/components/UmamiAnalytics";
 import { Toaster } from "@/components/ui/sonner";
@@ -32,15 +31,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 	return (
 		<html lang="zh" suppressHydrationWarning>
 			<head>
-				<link rel="icon" href="/logo.svg" type="image/svg+xml" />
-				<link rel="apple-touch-icon" href="/logo.svg" />
+				<link rel="icon" href={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/logo.svg`} type="image/svg+xml" />
+				<link rel="apple-touch-icon" href={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/logo.svg`} />
 			</head>
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} ${notoSansSC.variable} antialiased`}
 			>
 				<GoogleAnalytics />
 				<UmamiAnalytics />
-				<RegisterServiceWorker />
 				<ThemeProvider>
 					{children}
 					<Toaster />

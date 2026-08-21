@@ -30,16 +30,13 @@ export function RenameHeader() {
 				{/* Left: Logo */}
 				<div className="flex items-center gap-2.5">
 					<Image
-						src="/logo.svg"
-						alt="Rename.Tools Logo"
+						src={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/logo.svg`}
+						alt="批量重命名"
 						width={28}
 						height={28}
 						className="h-7 w-7 rounded-lg"
 					/>
-					<h1 className="text-base font-semibold tracking-tight text-white">
-						<span className="text-slate-200">rename</span>
-						<span className="text-blue-300">.tools</span>
-					</h1>
+					<h1 className="text-base font-semibold tracking-tight text-white">批量重命名</h1>
 				</div>
 
 				{/* Center: Tauri drag region */}

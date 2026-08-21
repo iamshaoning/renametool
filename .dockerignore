@@ -1,9 +1,0 @@
-node_modules
-.next
-.git
-.gitignore
-.dockerignore
-Dockerfile
-README.md
-.env*
-!.env.example

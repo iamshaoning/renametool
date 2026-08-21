@@ -8,7 +8,6 @@
 	"scripts": {
 		"dev": "next dev --turbopack",
 		"build": "next build --webpack",
-		"build:cf": "opennextjs-cloudflare build",
 		"start": "next start",
 		"lint": "biome lint .",
 		"format": "biome format --write .",
@@ -18,10 +17,7 @@
 		"test:watch": "vitest",
 		"test:ui": "vitest --ui",
 		"test:coverage": "vitest run --coverage",
-		"test:auto": "tsx tests/automation/run-tests.ts",
-		"preview:cf": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-		"deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-		"cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
+		"test:auto": "tsx tests/automation/run-tests.ts"
 	},
 	"dependencies": {
 		"@base-ui/react": "^1.3.0",

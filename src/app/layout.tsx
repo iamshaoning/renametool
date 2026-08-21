@@ -1,17 +1,14 @@
 import { Geist, Geist_Mono, Noto_Sans_SC } from "next/font/google";
-import { notFound } from "next/navigation";
-import { hasLocale, NextIntlClientProvider } from "next-intl";
+import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import type { ReactNode } from "react";
-import { ConditionalShell } from "@/components/ConditionalShell";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { RegisterServiceWorker } from "@/components/ServiceWorkerRegistration";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { UmamiAnalytics } from "@/components/UmamiAnalytics";
 import { Toaster } from "@/components/ui/sonner";
-import { routing } from "@/i18n/routing";
 import { generatePageMetadata } from "@/lib/metadata";
-import "../globals.css";
+import "./globals.css";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -29,32 +26,16 @@ const notoSansSC = Noto_Sans_SC({
 	weight: ["400", "500", "700"],
 });
 
-type Props = {
-	children: ReactNode;
-	params: Promise<{ locale: string }>;
-};
-
-export function generateStaticParams() {
-	return routing.locales.map((locale) => ({ locale }));
+export async function generateMetadata() {
+	return generatePageMetadata();
 }
 
-export async function generateMetadata({ params }: Omit<Props, "children">) {
-	const { locale } = await params;
-	return generatePageMetadata({ locale });
-}
-
-export default async function LocaleLayout({ children, params }: Props) {
-	const { locale } = await params;
-
-	if (!hasLocale(routing.locales, locale)) {
-		notFound();
-	}
-
-	setRequestLocale(locale);
+export default async function RootLayout({ children }: { children: ReactNode }) {
+	setRequestLocale("zh");
 	const messages = await getMessages();
 
 	return (
-		<html lang={locale} suppressHydrationWarning>
+		<html lang="zh" suppressHydrationWarning>
 			<head>
 				<link rel="icon" href="/logo.svg" type="image/svg+xml" />
 				<link rel="apple-touch-icon" href="/logo.svg" />
@@ -65,9 +46,9 @@ export default async function LocaleLayout({ children, params }: Props) {
 				<GoogleAnalytics />
 				<UmamiAnalytics />
 				<RegisterServiceWorker />
-				<NextIntlClientProvider locale={locale} messages={messages}>
+				<NextIntlClientProvider locale="zh" messages={messages}>
 					<ThemeProvider>
-						<ConditionalShell>{children}</ConditionalShell>
+						{children}
 						<Toaster />
 					</ThemeProvider>
 				</NextIntlClientProvider>

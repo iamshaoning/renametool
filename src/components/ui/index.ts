@@ -38,15 +38,4 @@ export {
 } from "./dropdown-menu";
 export { Input } from "./input";
 export { Label } from "./label";
-export { Separator } from "./separator";
-export {
-	Sheet,
-	SheetClose,
-	SheetContent,
-	SheetDescription,
-	SheetFooter,
-	SheetHeader,
-	SheetTitle,
-	SheetTrigger,
-} from "./sheet";
 export { Toaster } from "./sonner";

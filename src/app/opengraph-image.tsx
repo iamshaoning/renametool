@@ -1,5 +1,4 @@
 import { ImageResponse } from "next/og";
-import { routing } from "@/i18n/routing";
 
 export const alt = "Rename.Tools - Advanced Bulk File Renamer";
 
@@ -9,13 +8,8 @@ export const size = {
 };
 export const contentType = "image/png";
 export const dynamic = "force-static";
-export const dynamicParams = false;
 
 const featureLabels = ["Regex", "Sequences", "Case styles", "Local files"];
-
-export function generateStaticParams() {
-	return routing.locales.map((locale) => ({ locale }));
-}
 
 export default function Image() {
 	return new ImageResponse(

@@ -1,27 +1,22 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { routing } from "@/i18n/routing";
 import { SITE_ORIGIN, SITE_URL } from "@/lib/site";
 
+const LOCALE = "zh";
+
 type GeneratePageMetadataParams = {
-	locale: string;
 	path?: string;
 	namespace?: string;
 };
 
 export async function generatePageMetadata({
-	locale,
 	path = "",
 	namespace = "metadata",
-}: GeneratePageMetadataParams): Promise<Metadata> {
-	const t = await getTranslations({ locale, namespace });
+}: GeneratePageMetadataParams = {}): Promise<Metadata> {
+	const t = await getTranslations({ locale: LOCALE, namespace });
 
-	const url = `${SITE_URL}/${locale}${path}`;
-	const imageUrl = `${SITE_URL}/${locale}/opengraph-image`;
-
-	const alternateLanguages = Object.fromEntries(
-		routing.locales.map((l) => [l, `${SITE_URL}/${l}${path}`]),
-	);
+	const url = `${SITE_URL}${path}`;
+	const imageUrl = `${SITE_URL}/opengraph-image`;
 
 	return {
 		title: t("title"),
@@ -43,8 +38,8 @@ export async function generatePageMetadata({
 		alternates: {
 			canonical: url,
 			languages: {
-				...alternateLanguages,
-				"x-default": `${SITE_URL}/${locale}${path}`,
+				zh: url,
+				"x-default": url,
 			},
 		},
 		openGraph: {
@@ -52,7 +47,7 @@ export async function generatePageMetadata({
 			description: t("description"),
 			url,
 			siteName: "Rename.Tools",
-			locale,
+			locale: LOCALE,
 			type: "website",
 			images: [
 				{

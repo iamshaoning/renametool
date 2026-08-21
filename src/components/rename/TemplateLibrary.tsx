@@ -8,21 +8,18 @@ import {
 	CaseLower,
 	Clock,
 	Code2,
-	Download,
 	Eraser,
 	FileText,
 	Music,
 	Pin,
 	Search,
-	Share2,
 	Star,
 	Tag,
 	Trash2,
 	Tv,
-	Upload,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -256,7 +253,6 @@ export function TemplateLibrary({ onApply, trigger }: Props) {
 	const tPresets = useTranslations("rename.presets");
 	const templates = useTemplates();
 	const [open, setOpen] = useState(false);
-	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const presets = useFilteredPresets();
 	const pinned = usePresetsStore((state) => state.pinned);
@@ -270,10 +266,6 @@ export function TemplateLibrary({ onApply, trigger }: Props) {
 	const incrementUsage = usePresetsStore((state) => state.incrementUsage);
 	const togglePin = usePresetsStore((state) => state.togglePin);
 	const isPinned = usePresetsStore((state) => state.isPinned);
-	const exportPresets = usePresetsStore((state) => state.exportPresets);
-	const importPresets = usePresetsStore((state) => state.importPresets);
-	const generateShareUrl = usePresetsStore((state) => state.generateShareUrl);
-	const _allPresets = usePresetsStore((state) => state.presets);
 
 	const handleApply = (rules: RuleConfig[], presetId?: string) => {
 		onApply(rules);
@@ -281,32 +273,6 @@ export function TemplateLibrary({ onApply, trigger }: Props) {
 			incrementUsage(presetId);
 		}
 		setOpen(false);
-	};
-
-	const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-		const file = e.target.files?.[0];
-		if (!file) return;
-
-		try {
-			const count = await importPresets(file);
-			alert(tPresets("importSuccess", { count }));
-		} catch (_err) {
-			alert(tPresets("importError"));
-		}
-
-		if (fileInputRef.current) {
-			fileInputRef.current.value = "";
-		}
-	};
-
-	const handleShare = async (presetId: string) => {
-		const url = generateShareUrl(presetId);
-		try {
-			await navigator.clipboard.writeText(url);
-			alert(tPresets("shareCopied"));
-		} catch {
-			alert(url);
-		}
 	};
 
 	const handleTogglePin = (type: "system" | "user", id: string) => {
@@ -384,10 +350,9 @@ export function TemplateLibrary({ onApply, trigger }: Props) {
 											tags={item.tags}
 											isPinned={true}
 											onApply={() => handleApply(item.rules, isSystem ? undefined : presetId)}
-											onPin={() => handleTogglePin(pinType, presetId)}
-											onDelete={isSystem ? undefined : () => deletePreset(presetId)}
-											onShare={isSystem ? undefined : () => handleShare(presetId)}
-										/>
+										onPin={() => handleTogglePin(pinType, presetId)}
+										onDelete={isSystem ? undefined : () => deletePreset(presetId)}
+									/>
 									);
 								})}
 							</div>
@@ -456,20 +421,6 @@ export function TemplateLibrary({ onApply, trigger }: Props) {
 								</Select>
 
 								<div className="flex-1" />
-
-								<Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-									<Upload className="h-4 w-4 mr-1.5" />
-									{tPresets("import")}
-								</Button>
-								<Button
-									variant="outline"
-									size="sm"
-									onClick={() => exportPresets()}
-									disabled={presets.length === 0}
-								>
-									<Download className="h-4 w-4 mr-1.5" />
-									{tPresets("export")}
-								</Button>
 							</div>
 						</div>
 
@@ -498,25 +449,7 @@ export function TemplateLibrary({ onApply, trigger }: Props) {
 														{tPresets("howToCreateSimple")}
 													</span>
 												</div>
-												<div className="flex items-center gap-3 text-sm">
-													<div className="shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-														<span className="text-xs font-semibold text-primary">2</span>
-													</div>
-													<span className="text-muted-foreground">
-														{tPresets("howToImportSimple")}
-													</span>
-												</div>
 											</div>
-
-											<Button
-												variant="default"
-												size="default"
-												className="w-full"
-												onClick={() => fileInputRef.current?.click()}
-											>
-												<Upload className="h-4 w-4 mr-2" />
-												{tPresets("importPresets")}
-											</Button>
 										</div>
 									</div>
 								</div>
@@ -536,7 +469,6 @@ export function TemplateLibrary({ onApply, trigger }: Props) {
 											onApply={() => handleApply(preset.rules, preset.id)}
 											onPin={() => handleTogglePin("user", preset.id)}
 											onDelete={() => deletePreset(preset.id)}
-											onShare={() => handleShare(preset.id)}
 										/>
 									))}
 								</div>
@@ -544,14 +476,6 @@ export function TemplateLibrary({ onApply, trigger }: Props) {
 						</div>
 					</TabsContent>
 				</Tabs>
-
-				<input
-					ref={fileInputRef}
-					type="file"
-					accept=".json"
-					className="hidden"
-					onChange={handleImport}
-				/>
 			</DialogContent>
 		</Dialog>
 	);
@@ -569,7 +493,6 @@ interface PresetCardProps {
 	onApply: () => void;
 	onPin: () => void;
 	onDelete?: () => void;
-	onShare?: () => void;
 }
 
 function PresetCard({
@@ -584,7 +507,6 @@ function PresetCard({
 	onApply,
 	onPin,
 	onDelete,
-	onShare,
 }: PresetCardProps) {
 	const tPresets = useTranslations("rename.presets");
 
@@ -649,11 +571,6 @@ function PresetCard({
 						>
 							<Pin className="h-3.5 w-3.5" fill={isPinned ? "currentColor" : "none"} />
 						</Button>
-						{onShare && (
-							<Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onShare}>
-								<Share2 className="h-3.5 w-3.5" />
-							</Button>
-						)}
 						{onDelete && (
 							<Button
 								variant="ghost"

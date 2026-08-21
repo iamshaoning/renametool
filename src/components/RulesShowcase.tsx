@@ -1,6 +1,6 @@
 "use client";
 
-import { Code2, Hash, LetterText, Regex, Replace, Sparkles } from "lucide-react";
+import { Hash, LetterText, Regex, Replace, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ShowcaseTabs } from "./ShowcaseTabs";
 
@@ -36,14 +36,6 @@ const RULE_ITEMS = [
 		bgColor: "bg-emerald-500/10",
 		borderColor: "border-emerald-500",
 		screenshot: "/screenshots/screenshot_case_style.png",
-	},
-	{
-		id: "customJs",
-		icon: Code2,
-		color: "text-orange-500",
-		bgColor: "bg-orange-500/10",
-		borderColor: "border-orange-500",
-		screenshot: "/product_screenshot.png",
 	},
 	{
 		id: "templates",

@@ -9,7 +9,7 @@ import {
 	getGuidePrimaryImage,
 	isIndexableGuideLocale,
 } from "@/lib/guides/content";
-import { SITE_URL } from "@/lib/site";
+import { SITE_ORIGIN, SITE_URL } from "@/lib/site";
 
 type Props = {
 	params: Promise<{ locale: string }>;
@@ -19,20 +19,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 	const { locale } = await params;
 	const copy = getGuideIndexCopy(locale);
 	const isIndexable = isIndexableGuideLocale(locale);
-	const canonicalLocale = isIndexable ? locale : "en";
+	const canonicalLocale = isIndexable ? locale : "zh";
 	const canonical = `${SITE_URL}/${canonicalLocale}/guides`;
 	const imageUrl = `${SITE_URL}/${canonicalLocale}/opengraph-image`;
 
 	return {
 		title: copy.title,
 		description: copy.description,
-		metadataBase: new URL(SITE_URL),
+		metadataBase: new URL(SITE_ORIGIN),
 		alternates: {
 			canonical,
 			languages: {
-				en: `${SITE_URL}/en/guides`,
 				zh: `${SITE_URL}/zh/guides`,
-				"x-default": `${SITE_URL}/en/guides`,
+				"x-default": `${SITE_URL}/zh/guides`,
 			},
 		},
 		openGraph: {
@@ -68,7 +67,6 @@ export default async function GuidesPage({ params }: Props) {
 	const copy = getGuideIndexCopy(locale);
 	const guides = getAllGuides(locale);
 	const featuredGuides = guides.slice(0, 3);
-	const guideLinkLocale = isIndexableGuideLocale(locale) ? locale : "en";
 
 	return (
 		<div className="min-h-screen bg-background text-foreground">
@@ -101,7 +99,6 @@ export default async function GuidesPage({ params }: Props) {
 							<Link
 								key={guide.slug}
 								href={`/guides/${guide.slug}`}
-								locale={guideLinkLocale}
 								className="group overflow-hidden rounded-lg border bg-card shadow-sm transition-colors hover:border-foreground/30"
 							>
 								{primaryImage && (
@@ -151,7 +148,6 @@ export default async function GuidesPage({ params }: Props) {
 						<Link
 							key={guide.slug}
 							href={`/guides/${guide.slug}`}
-							locale={guideLinkLocale}
 							className="group grid gap-4 p-5 transition-colors hover:bg-muted/40 sm:grid-cols-[1fr_auto]"
 						>
 							<div>

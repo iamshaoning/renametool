@@ -38,10 +38,6 @@ interface PresetsState {
 	incrementUsage: (id: string) => void;
 	togglePin: (type: "system" | "user", id: string) => void;
 	isPinned: (type: "system" | "user", id: string) => boolean;
-	exportPresets: (ids?: string[]) => void;
-	importPresets: (file: File) => Promise<number>;
-	generateShareUrl: (id: string) => string;
-	importFromUrl: (encoded: string) => string | null;
 }
 
 export const usePresetsStore = create<PresetsState>()(
@@ -116,93 +112,6 @@ export const usePresetsStore = create<PresetsState>()(
 
 			isPinned: (type, id) => {
 				return get().pinned.some((p) => p.type === type && p.id === id);
-			},
-
-			exportPresets: (ids) => {
-				const { presets } = get();
-				const toExport = ids ? presets.filter((p) => ids.includes(p.id)) : presets;
-				const data = JSON.stringify(toExport, null, 2);
-				const blob = new Blob([data], { type: "application/json" });
-				const url = URL.createObjectURL(blob);
-				const a = document.createElement("a");
-				a.href = url;
-				a.download = `rename-presets-${new Date().toISOString().slice(0, 10)}.json`;
-				a.click();
-				URL.revokeObjectURL(url);
-			},
-
-			importPresets: (file) => {
-				return new Promise<number>((resolve, reject) => {
-					const reader = new FileReader();
-					reader.onload = (e) => {
-						try {
-							const imported = JSON.parse(e.target?.result as string) as UserPreset[];
-							if (!Array.isArray(imported)) {
-								throw new Error("Invalid preset format");
-							}
-
-							const newPresets = imported.map((p) => ({
-								...p,
-								id: generatePresetId(),
-								createdAt: Date.now(),
-								lastUsedAt: Date.now(),
-								usageCount: 0,
-							}));
-
-							set((state) => ({
-								presets: [...state.presets, ...newPresets],
-							}));
-
-							resolve(newPresets.length);
-						} catch (err) {
-							reject(err);
-						}
-					};
-					reader.onerror = () => reject(new Error("Failed to read file"));
-					reader.readAsText(file);
-				});
-			},
-
-			generateShareUrl: (id) => {
-				const preset = get().presets.find((p) => p.id === id);
-				if (!preset) return "";
-
-				const exportData = {
-					name: preset.name,
-					description: preset.description,
-					tags: preset.tags,
-					category: preset.category,
-					rules: preset.rules,
-				};
-
-				const encoded = btoa(encodeURIComponent(JSON.stringify(exportData)));
-				return `${window.location.origin}${window.location.pathname}?preset=${encoded}`;
-			},
-
-			importFromUrl: (encoded) => {
-				try {
-					const decoded = JSON.parse(decodeURIComponent(atob(encoded)));
-					const preset: UserPreset = {
-						id: generatePresetId(),
-						name: decoded.name || "Imported Preset",
-						description: decoded.description,
-						tags: decoded.tags,
-						category: decoded.category,
-						rules: decoded.rules,
-						createdAt: Date.now(),
-						lastUsedAt: Date.now(),
-						usageCount: 0,
-					};
-
-					set((state) => ({
-						presets: [...state.presets, preset],
-					}));
-
-					return preset.id;
-				} catch (err) {
-					console.error("Failed to import from URL:", err);
-					return null;
-				}
 			},
 		}),
 		{

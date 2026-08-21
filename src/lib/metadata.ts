@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { routing } from "@/i18n/routing";
-import { SITE_URL } from "@/lib/site";
+import { SITE_ORIGIN, SITE_URL } from "@/lib/site";
 
 type GeneratePageMetadataParams = {
 	locale: string;
@@ -26,7 +26,7 @@ export async function generatePageMetadata({
 	return {
 		title: t("title"),
 		description: t("description"),
-		metadataBase: new URL(SITE_URL),
+		metadataBase: new URL(SITE_ORIGIN),
 		keywords: [
 			"bulk rename files",
 			"bulk file renamer",
@@ -44,7 +44,7 @@ export async function generatePageMetadata({
 			canonical: url,
 			languages: {
 				...alternateLanguages,
-				"x-default": `${SITE_URL}/en${path}`,
+				"x-default": `${SITE_URL}/${locale}${path}`,
 			},
 		},
 		openGraph: {

@@ -1,4 +1,4 @@
-export const GUIDE_LOCALES = ["en", "zh"] as const;
+export const GUIDE_LOCALES = ["zh"] as const;
 
 export type GuideLocale = (typeof GUIDE_LOCALES)[number];
 
@@ -70,26 +70,6 @@ export const guideIndexCopy: Record<
 		ctaDesc: string;
 	}
 > = {
-	en: {
-		title: "Guides - Rename.Tools",
-		description:
-			"Practical guides for bulk file renaming with Rename.Tools: regex, sequences, photo organization, music libraries, and batch rename workflows.",
-		eyebrow: "Guides",
-		heading: "Practical file renaming guides",
-		intro:
-			"Learn reliable workflows for cleaning up photos, media libraries, downloads, and archive folders with live preview and local processing.",
-		allGuides: "All guides",
-		featured: "Featured workflows",
-		updated: "Updated",
-		minRead: "min read",
-		relatedGuides: "Related guides",
-		startRenaming: "Start renaming",
-		readGuide: "Read guide",
-		backToGuides: "Back to guides",
-		ctaTitle: "Ready to try the workflow?",
-		ctaDesc:
-			"Open Rename.Tools, add a few sample files, and preview every rule before touching the real filenames.",
-	},
 	zh: {
 		title: "使用指南 - Rename.Tools",
 		description:
@@ -118,115 +98,6 @@ export const guides: Guide[] = [
 		readingTime: 9,
 		relatedSlugs: ["sequence-file-numbering", "regex-batch-rename"],
 		content: {
-			en: {
-				title: "Bulk file renaming basics: import, preview, execute",
-				description:
-					"Learn the safest bulk rename workflow: add files, build a rule chain, inspect the preview, resolve conflicts, and execute locally.",
-				intro:
-					"Bulk renaming works best when you treat it like a reviewable change: import a small set, add one rule at a time, and only execute after the preview is clean.",
-				categoryLabel: "Getting started",
-				sections: [
-					{
-						title: "Start in Sample Test Mode",
-						body: [
-							"Sample Test Mode is the safest way to learn the interface because it does not ask for file permissions and cannot change anything on disk. You paste or generate filenames, then test the same rules you would use on real files.",
-							"For a first run, use a mixed set of names: a few camera files, one document, and one video filename. Mixed examples make it obvious which rules are too broad and which ones only affect the intended files.",
-						],
-						image: {
-							src: "/guides/screenshots/app-sample-files.png",
-							alt: "Rename.Tools sample test mode with six imported filenames and an unchanged preview",
-							caption:
-								"Use Sample Test Mode to rehearse a workflow before selecting real files from your device.",
-						},
-						steps: [
-							"Open the app and click Try Sample Test Mode in the file panel.",
-							"Paste one filename per line, including the extension, such as IMG_0421.jpg.",
-							"Click Import Files inside the sample panel.",
-							"Confirm the file list and preview both show the same unchanged names.",
-							"Keep Scope set to Name so the first rules do not accidentally rewrite extensions.",
-						],
-					},
-					{
-						title: "Build one rule at a time",
-						body: [
-							"A reliable bulk rename workflow is a sequence of small, reviewable edits. Add the cleanup rule first, check the preview, then add numbering. If the preview changes something unexpected, the last rule you added is the easiest place to look.",
-							"This example removes a camera prefix and adds a padded sequence number. It is intentionally simple: the goal is to learn how the rule chain changes the preview before you use more advanced variables or regex.",
-						],
-						image: {
-							src: "/guides/screenshots/app-sequence-preview.png",
-							alt: "Rename.Tools rule chain with Find and Replace plus Sequence rules updating the preview",
-							caption:
-								"Add rules one by one and check the preview after each change. Here the sequence rule updates all six sample files.",
-						},
-						steps: [
-							"Click Add Rule and choose Find & Replace.",
-							"Set Find to IMG_ and leave Replace with empty to remove the prefix.",
-							"Click Add Rule again and choose Sequence.",
-							"Keep Sequence type as Numeric, Start value as 1, Step as 1, and Zero padding as 3.",
-							"Review the Preview panel and make sure the numbered results match your intended order.",
-						],
-						examples: [
-							{
-								before: "IMG_0421.jpg",
-								after: "2026-05-22_001.jpg",
-								note: "Remove IMG_, insert a date prefix, then add a padded sequence.",
-							},
-							{
-								before: "IMG_0422.jpg",
-								after: "2026-05-22_002.jpg",
-							},
-						],
-					},
-					{
-						title: "Read the preview like a checklist",
-						body: [
-							"The preview panel is not just a visual nicety; it is the review step. Scan the Original column first, then the New Name column, and look for changes that do not match the rule you thought you wrote.",
-							"Use Affected Only when the list is long. It hides unchanged files so you can focus on what will actually be renamed. Use Conflicts Only whenever the conflict count is non-zero, because duplicate target names must be fixed before execution.",
-						],
-						steps: [
-							"Check that every changed file still has the correct extension.",
-							"Check that no new name is empty or only a number.",
-							"Check that numbering order matches the file order you want.",
-							"Check Conflicts Only before execution, even if the list looks clean.",
-						],
-						examples: [
-							{
-								before: "report (final).docx",
-								after: "005report (final).docx",
-								note: "This may be technically correct but not desirable; it tells you the sequence rule is affecting documents too.",
-							},
-						],
-					},
-					{
-						title: "Execute directly or export a script",
-						body: [
-							"In Chromium browsers, Rename.Tools can directly rename files selected through the File System Access API. In Firefox or Safari, or when you want a reviewable command-line workflow, export a script instead.",
-							"Script export is also useful for teams: one person can build and review the rename plan in the browser, then run the generated Bash or PowerShell script in a controlled folder.",
-						],
-						steps: [
-							"For real files, start with a small folder or a copied test folder.",
-							"Click Export Plan if you want a plain mapping of old names to new names.",
-							"Click Export Script when direct browser renaming is not available or you prefer terminal execution.",
-							"Click Execute Rename only after the preview and conflict checks are clean.",
-							"After execution, use Undo immediately if you notice a mistake.",
-						],
-					},
-					{
-						title: "Common first-run mistakes",
-						body: [
-							"Most mistakes come from applying a rule to more files than intended. If only photos should change, filter the file list first or build the rule so it matches only photo-style names.",
-							"Another common mistake is changing the full filename when you only wanted to change the name part. Keep Scope on Name for most workflows; switch to Ext or Full only when the guide or your own plan explicitly requires it.",
-						],
-						examples: [
-							{
-								before: "movie.name.s01e03.1080p.mkv",
-								after: "006movie.name.s01e03.1080p.mkv",
-								note: "A global sequence rule can affect every selected file. Filter or split batches when file types need different naming rules.",
-							},
-						],
-					},
-				],
-			},
 			zh: {
 				title: "批量重命名入门：导入、预览、执行",
 				description:
@@ -236,21 +107,20 @@ export const guides: Guide[] = [
 				categoryLabel: "入门",
 				sections: [
 					{
-						title: "先用示例测试模式练习",
+						title: "先导入少量文件熟悉界面",
 						body: [
-							"示例测试模式是学习界面最安全的方式：它不需要文件权限，也不会修改磁盘上的真实文件。你只需要粘贴或生成一些文件名，就能测试和真实文件完全一样的规则链。",
-							"第一次练习建议放入混合文件名：几张相机照片、一个文档和一个视频文件名。混合示例能帮你发现规则是否过宽，是否误伤了不该处理的文件。",
+							"最稳妥的方式是从少量文件开始：先导入几张照片、一个文档和一个视频文件名。混合示例能帮你发现规则是否过宽，是否误伤了不该处理的文件。",
+							"导入的文件只会在浏览器本地处理，不会上传到任何服务器。你可以放心地在预览中反复调整规则，直到确认无误。",
 						],
 						image: {
 							src: "/guides/screenshots/app-sample-files.png",
-							alt: "Rename.Tools 示例测试模式，已导入 6 个示例文件并显示未变化的预览",
-							caption: "用示例测试模式先演练工作流，再选择设备中的真实文件。",
+							alt: "Rename.Tools 文件面板，已导入 6 个文件并显示未变化的预览",
+							caption: "先导入少量文件熟悉界面，再处理真实目录。",
 						},
 						steps: [
-							"打开应用，在文件面板点击“试用示例测试模式”。",
-							"每行输入一个文件名，包含扩展名，例如 IMG_0421.jpg。",
-							"点击示例面板中的“导入文件”。",
-							"确认文件列表和预览面板都显示相同的未变化文件名。",
+							"打开应用，在文件面板点击“添加文件”。",
+							"选择几个不同扩展名的文件，例如图片、文档和视频。",
+							"确认文件列表显示正确，并检查预览面板的初始状态。",
 							"保持作用域为“名称”，避免第一轮规则意外修改扩展名。",
 						],
 					},
@@ -306,17 +176,16 @@ export const guides: Guide[] = [
 						],
 					},
 					{
-						title: "直接执行还是导出脚本",
+						title: "确认后直接执行，出错立即撤销",
 						body: [
-							"在 Chromium 浏览器中，通过 File System Access API 选择的真实文件可以直接重命名。若使用 Firefox、Safari，或希望先走命令行审查流程，可以选择导出脚本。",
-							"脚本导出也适合团队场景：一个人用浏览器构建并检查重命名方案，再在受控文件夹中运行生成的 Bash 或 PowerShell 脚本。",
+							"在 Chromium 浏览器中，通过 File System Access API 选择的真实文件可以直接重命名。预览和冲突检查都确认干净后，点击“执行重命名”即可。",
+							"执行后如果立即发现错误，优先使用内置撤销功能恢复。撤销会记录最近一次执行结果，可以一键还原。",
 						],
 						steps: [
 							"处理真实文件时，先从小文件夹或复制出来的测试文件夹开始。",
-							"如果想保存旧名到新名的映射，点击“导出方案”。",
-							"如果浏览器不能直接重命名，或你更偏好终端流程，点击“导出脚本”。",
+							"执行前再次确认预览中的新旧文件名映射符合预期。",
 							"只有当预览和冲突检查都干净时，才点击“执行重命名”。",
-							"执行后如果立即发现错误，优先使用内置撤销。",
+							"执行后如果立即发现错误，使用撤销按钮还原。",
 						],
 					},
 					{
@@ -344,103 +213,6 @@ export const guides: Guide[] = [
 		readingTime: 10,
 		relatedSlugs: ["batch-file-rename-basics", "sequence-file-numbering"],
 		content: {
-			en: {
-				title: "Organize photos by date and sequence number",
-				description:
-					"Rename camera photos with date prefixes and padded sequence numbers so albums stay sortable and easy to scan.",
-				intro:
-					"Camera filenames are unique but rarely meaningful. A date plus sequence pattern keeps photos chronological, portable, and easy to search later.",
-				categoryLabel: "Photos",
-				sections: [
-					{
-						title: "Choose a stable photo naming pattern",
-						body: [
-							"A good photo filename should still make sense after it leaves Rename.Tools. Put the date first, then a padded sequence number, then an optional place, client, event, or camera label.",
-							"Use four-digit years and two-digit months and days. That keeps alphabetical sorting aligned with time order in Finder, Explorer, cloud drives, NAS folders, and media backup tools.",
-							"Decide whether the name should describe when the photo was taken, where it belongs, or both. For personal albums, date plus location is usually enough. For client work, add the project or shoot name so exported files remain recognizable.",
-						],
-						examples: [
-							{
-								before: "DSC_0007.JPG",
-								after: "2026-05-22_001_tokyo.JPG",
-							},
-							{
-								before: "IMG_1842.HEIC",
-								after: "2026-05-22_002_tokyo.HEIC",
-							},
-						],
-					},
-					{
-						title: "Build the rule chain",
-						body: [
-							"Use Find & Replace or Remove to strip camera prefixes when they do not carry useful meaning. Then use Sequence with padding so every file receives a predictable number.",
-							"For albums that should keep the original camera order, sort by name before numbering. For mixed phone and camera photos, sort by modified time or EXIF date when metadata is available.",
-						],
-						image: {
-							src: "/guides/screenshots/app-sequence-preview.png",
-							alt: "Rename.Tools photo cleanup workflow showing camera filenames converted with a sequence rule",
-							caption:
-								"The sequence preview makes it easy to confirm ordering before you rename an entire photo folder.",
-						},
-						steps: [
-							"Import only the photo folder or filter the file list to image extensions.",
-							"Set Scope to Name so extensions such as .jpg and .heic remain unchanged.",
-							"Add a cleanup rule for camera prefixes such as IMG_, DSC_, or PXL_.",
-							"Add a Sequence rule with padding set to 3 or 4.",
-							"Use a template like {date}_{n}_trip or {exif.date}_{n}_trip when EXIF metadata is loaded.",
-							"Keep extension scope on filename only unless you intentionally want to change extensions.",
-						],
-					},
-					{
-						title: "When EXIF metadata helps",
-						body: [
-							"If the photos include EXIF dates, load metadata and prefer EXIF date variables over today's date. This is useful when files were copied, downloaded, exported from a phone, or edited after they were taken.",
-							"EXIF is not guaranteed. Screenshots, social media exports, edited images, and some HEIC conversions may have missing or changed metadata. Keep a fallback workflow that uses folder names, today's date, or manual event labels.",
-							"When EXIF dates differ from file modified times, trust the value that matches your organizing goal. For a vacation album, capture date is usually better. For a delivery folder, export date may be more useful.",
-						],
-					},
-					{
-						title: "Quality check before renaming photos",
-						body: [
-							"Before execution, scan the first few and last few preview rows. This catches sorting mistakes, especially when filenames include numbers with different lengths.",
-							"If the preview includes non-photo files, stop and filter the list. Mixing photos, documents, and videos in one sequence can create technically valid names that are not useful later.",
-						],
-						steps: [
-							"Confirm every target name begins with the intended date.",
-							"Confirm sequence numbers are padded consistently, such as 001, 002, and 003.",
-							"Confirm .jpg, .png, .heic, and .raw-style extensions were not rewritten.",
-							"Switch to Affected Only and scan for files that should have stayed unchanged.",
-						],
-						examples: [
-							{
-								before: "Vacation/IMG_0421.jpg",
-								after: "Vacation/2026-05-22_001_tokyo.jpg",
-								note: "Keeping the event folder and adding a sortable filename gives you two useful organization layers.",
-							},
-						],
-					},
-					{
-						title: "Separate photos by source when needed",
-						body: [
-							"Phone photos, DSLR files, screenshots, RAW exports, and edited copies often need different naming rules. If one rule chain starts getting complicated, split the files into smaller batches instead of forcing every case into one workflow.",
-							"For example, camera photos may use EXIF date plus sequence, screenshots may use the modified date, and edited exports may use a project label plus version number. Smaller batches produce cleaner names and make preview review faster.",
-						],
-						steps: [
-							"Use folders or filters to separate camera photos, screenshots, and edited exports.",
-							"Create one preset for capture-based names and another for export-based names.",
-							"Keep RAW and edited JPEG files in separate batches if they should not share the same sequence.",
-							"Use a short event label only when the folder name alone is not enough context.",
-						],
-						examples: [
-							{
-								before: "Edits/final_export_3.jpg",
-								after: "client-a_2026-05-22_v03.jpg",
-								note: "Edited exports often benefit from version labels more than capture-time names.",
-							},
-						],
-					},
-				],
-			},
 			zh: {
 				title: "按日期和序号整理照片",
 				description: "用日期前缀和补零序号重命名相机照片，让相册保持可排序、易浏览、易查找。",
@@ -545,106 +317,6 @@ export const guides: Guide[] = [
 		readingTime: 11,
 		relatedSlugs: ["batch-file-rename-basics", "sequence-file-numbering"],
 		content: {
-			en: {
-				title: "Use regular expressions for bulk file renaming",
-				description:
-					"Learn practical regex bulk rename patterns for removing clutter, rearranging dates, and extracting useful filename parts.",
-				intro:
-					"Regex is the most powerful rename rule when filenames share a pattern. Use it when simple find and replace cannot describe the change precisely.",
-				categoryLabel: "Patterns",
-				sections: [
-					{
-						title: "Start with one clear pattern",
-						body: [
-							"Regex works best when filenames are consistent. Match only the part you intend to change, and keep the replacement readable. A narrow pattern is easier to review than a clever pattern that tries to solve every filename at once.",
-							"Use capture groups when you need to keep useful parts and rearrange them in a new order. In Rename.Tools, the replacement can use $1, $2, and later groups to put captured pieces back into the new name.",
-							"Before writing the regex, describe the filename in plain language: where is the date, where is the title, where is the episode code, and which parts should be deleted. That description often becomes the pattern.",
-						],
-						examples: [
-							{
-								before: "2026-05-22 invoice client-a.pdf",
-								after: "invoice_client-a_2026-05-22.pdf",
-								note: "Capture the date and title, then swap their order.",
-							},
-							{
-								before: "movie.name.s01e03.1080p.mkv",
-								after: "movie name S01E03.mkv",
-							},
-						],
-					},
-					{
-						title: "Useful regex rename patterns",
-						body: [
-							"These patterns are good starting points. Preview them on a small file set before applying them to a folder with thousands of files. If one pattern feels fragile, split the workflow into a regex rule plus a simple Find & Replace cleanup rule.",
-							"Keep the Flags field intentional. Use i for case-insensitive matching, g when you want every occurrence replaced, and avoid m unless you are working with multi-line text pasted into filenames.",
-						],
-						image: {
-							src: "/guides/screenshots/app-regex-preview.png",
-							alt: "Rename.Tools regex rule extracting a video episode code and updating the preview",
-							caption:
-								"Regex rules are easiest to audit when the preview shows the exact captured parts and replacement result.",
-						},
-						steps: [
-							"Open Add Rule and choose Regex Replace.",
-							"Enter the pattern in Regex pattern and the target shape in Replace with.",
-							"Use the preview to verify which filenames changed and which stayed untouched.",
-							"Remove bracketed notes: \\s*\\[[^\\]]+\\]",
-							"Move leading date to the end: ^(\\d{4}-\\d{2}-\\d{2})\\s+(.+)$ -> $2_$1",
-							"Normalize episode casing: s(\\d+)e(\\d+) -> S$1E$2",
-							"Collapse repeated spaces: \\s+ -> single space",
-						],
-					},
-					{
-						title: "Keep regex safe",
-						body: [
-							"Avoid overly broad patterns like .* unless you really mean to replace everything. If a replacement produces empty names, duplicate names, or removes more text than expected, stop and narrow the match.",
-							"When the regex rule is hard to reason about, split the workflow into two or three simpler rules. The preview will be easier to audit, and future you will understand the preset more quickly.",
-							"Regex does not need to be the first rule. Often the clearest workflow is to clean obvious text with Find & Replace, use regex for the structural transformation, then apply Case/Style or Sequence as the final polish.",
-						],
-					},
-					{
-						title: "Debug a pattern with the preview",
-						body: [
-							"When a regex does not work, do not immediately make it more complex. First check whether the pattern is matching the right text at all. A good debugging trick is to replace with a visible marker such as MATCH_$1 so you can see what was captured.",
-							"Then restore the real replacement once the captured groups are correct. This workflow is slower for one filename, but much faster for a folder with hundreds of files.",
-						],
-						steps: [
-							"Test the regex on three to five representative filenames first.",
-							"Temporarily replace with a marker such as match_$1_$2.",
-							"Confirm the preview shows the captured parts you expected.",
-							"Restore the final replacement after the groups are correct.",
-							"Switch to Affected Only to ensure unrelated filenames were not matched.",
-						],
-						examples: [
-							{
-								before: "client-a_invoice_2026-05-22_final.pdf",
-								after: "invoice_client-a_2026-05-22.pdf",
-								note: "A targeted pattern can preserve the client, document type, and date while removing the temporary final tag.",
-							},
-						],
-					},
-					{
-						title: "Know when not to use regex",
-						body: [
-							"Regex is powerful, but it is not always the clearest tool. If you only need to replace one literal word, use Find & Replace. If you only need numbering, use Sequence. If you need case conversion, use Case/Style.",
-							"The best rule chain is often a combination: simple rules for simple edits, regex only for the structural part, and a final preview pass to verify the result. This keeps presets easier to maintain and safer for future batches.",
-						],
-						steps: [
-							"Use Find & Replace for fixed words or separators.",
-							"Use Remove/Cleanup for repeated clutter such as brackets or symbols.",
-							"Use Regex Replace when the useful parts must be captured and rearranged.",
-							"Save regex presets only after testing them on several filename variants.",
-						],
-						examples: [
-							{
-								before: "My Vacation Photos.jpg",
-								after: "my-vacation-photos.jpg",
-								note: "This is a Case/Style job, not a regex job.",
-							},
-						],
-					},
-				],
-			},
 			zh: {
 				title: "用正则表达式批量重命名",
 				description:
@@ -753,103 +425,6 @@ export const guides: Guide[] = [
 		readingTime: 9,
 		relatedSlugs: ["organize-photos-by-date-sequence", "batch-file-rename-basics"],
 		content: {
-			en: {
-				title: "Create stable filenames with sequence numbering",
-				description:
-					"Use padded sequence numbers, sorting, and per-folder numbering to create filenames that stay organized everywhere.",
-				intro:
-					"Sequence numbers are simple, but the setup matters. Padding, sort order, and scope determine whether names stay stable after export, upload, or archive.",
-				categoryLabel: "Numbering",
-				sections: [
-					{
-						title: "Use padding for reliable sorting",
-						body: [
-							"Without padding, file managers may sort 10 before 2. Padding fixes that by making every number the same width, so alphabetical sorting matches numeric order.",
-							"Use 2 digits for small albums, 3 digits for hundreds of files, and 4 digits when the folder may grow over time. Choosing one extra digit is usually harmless; choosing too few can create a messy rename later.",
-							"Padding is especially important when files will be uploaded to cloud drives, shared with clients, imported into editing software, or archived in systems that use simple alphabetical ordering.",
-						],
-						image: {
-							src: "/guides/screenshots/app-sequence-preview.png",
-							alt: "Rename.Tools sequence rule preview with zero-padded numbers applied to sample files",
-							caption:
-								"Zero padding is visible immediately in the preview, so sorting problems are easy to catch before execution.",
-						},
-						examples: [
-							{
-								before: "photo 1.jpg, photo 2.jpg, photo 10.jpg",
-								after: "001_photo.jpg, 002_photo.jpg, 010_photo.jpg",
-							},
-						],
-					},
-					{
-						title: "Choose the right sequence scope",
-						body: [
-							"Global numbering is best when the full batch should be one ordered set. Per-folder numbering is better for albums, chapters, exports, or client folders that should each start at 001.",
-							"Per-extension and per-category scopes are useful when one folder contains different file types. For example, screenshots and videos can each get their own numbering without being mixed into the same sequence.",
-						],
-						steps: [
-							"Use global scope for one album or one export batch.",
-							"Use per-folder scope when each folder should keep its own sequence.",
-							"Use per-extension scope when images, videos, and documents should be numbered separately.",
-							"Sort before numbering when imported order is not reliable.",
-							"Use natural sort for names such as file1, file2, and file10.",
-						],
-					},
-					{
-						title: "Combine sequences with templates",
-						body: [
-							"A sequence rule can do more than add a number. Combine {n}, {name}, dates, folder names, or metadata variables to create names that are structured but still readable.",
-							"Templates are strongest when the stable sorting part comes first. A pattern like {date}_{n}_{name} sorts by date first, then by sequence. A pattern like {name}_{n}_{date} may be more readable, but it will group by original name instead.",
-						],
-						examples: [
-							{
-								before: "scan.jpg",
-								after: "archive_2026_001_scan.jpg",
-							},
-						],
-					},
-					{
-						title: "Preserve numbers when the original order matters",
-						body: [
-							"Some files already contain useful numbers: scanned pages, exported frames, chapter files, or camera burst shots. In those cases, you may not want to generate a new sequence from import order.",
-							"Use Preserve original numbers when the number inside the filename is already the source of truth. Rename.Tools can extract that number, pad it consistently, and keep the relationship between old and new names clear.",
-						],
-						steps: [
-							"Enable Preserve original numbers in the Sequence rule.",
-							"Keep the extract pattern as (\\d+) for simple filenames with one number.",
-							"Use a more specific pattern when filenames contain several numbers, such as page-(\\d+).",
-							"Preview files where extraction fails; they will fall back to normal sequencing.",
-						],
-						examples: [
-							{
-								before: "page-7-scan.jpg",
-								after: "page_007_scan.jpg",
-								note: "Preserving the original page number avoids changing document order.",
-							},
-						],
-					},
-					{
-						title: "Decide the order before you number",
-						body: [
-							"Sequence numbering is only as good as the order behind it. Import order can be convenient, but it is not always stable across browsers, folders, or operating systems.",
-							"For predictable results, choose the sort order intentionally before numbering. Name sorting works well for camera files, modified time can work for documents, and extension sorting is useful when you are numbering each file type separately.",
-						],
-						steps: [
-							"Use Sort before numbering when imported order is not meaningful.",
-							"Choose File name for camera-style filenames that already sort correctly.",
-							"Choose Modified time for document batches that were created or exported in order.",
-							"Preview the first and last numbers to confirm the ordering is right.",
-						],
-						examples: [
-							{
-								before: "scan10.jpg, scan2.jpg, scan1.jpg",
-								after: "001_scan1.jpg, 002_scan2.jpg, 010_scan10.jpg",
-								note: "Natural sort prevents scan10 from being numbered before scan2.",
-							},
-						],
-					},
-				],
-			},
 			zh: {
 				title: "用序号规则生成稳定文件名",
 				description: "使用补零序号、排序和按文件夹编号，生成在任何地方都能保持有序的文件名。",
@@ -954,100 +529,10 @@ export const guides: Guide[] = [
 		readingTime: 10,
 		relatedSlugs: ["regex-batch-rename", "sequence-file-numbering"],
 		content: {
-			en: {
-				title: "Organize music libraries and video episode filenames",
-				description:
-					"Clean up music files and video episodes with metadata variables, sequence rules, regex patterns, and TMDb-assisted matching.",
-				intro:
-					"Media files often arrive with noisy release names. Rename.Tools can turn them into predictable names for players, media servers, and shared folders.",
-				categoryLabel: "Media",
-				sections: [
-					{
-						title: "Music library naming",
-						body: [
-							"For albums, filenames should preserve track order and remain readable outside the music player. If tags are available, load metadata and use artist, title, album, or track variables.",
-							"A practical music pattern is track number first, then artist, then title. It sorts correctly in folders and still makes sense when files are copied to a USB drive, phone, DJ library, or media server.",
-							"If your files do not have reliable tags, start with the existing filename and use Sequence for track order. You can still clean separators and casing without depending on metadata.",
-						],
-						steps: [
-							"Import one album at a time when track order matters.",
-							"Load metadata if the files have reliable audio tags.",
-							"Use a template such as {media.track}. {media.artist} - {media.title}.",
-							"Keep Scope set to Name so audio extensions remain unchanged.",
-							"Preview missing artist or title values before executing.",
-						],
-						examples: [
-							{
-								before: "love story.mp3",
-								after: "01. Taylor Swift - Love Story.mp3",
-							},
-							{
-								before: "track_07.flac",
-								after: "07. Artist - Song Title.flac",
-							},
-						],
-					},
-					{
-						title: "Video and episode cleanup",
-						body: [
-							"Video files often include dots, quality tags, release group names, and inconsistent episode casing. Use regex to extract the show and episode code, then clean separators with find and replace.",
-							"When you have a TMDb API key, use the media scraper to match episodes and bring in better titles before generating final names. If you do not want to use TMDb, you can still standardize S01E03-style filenames with regex alone.",
-							"For media servers, consistency matters more than clever wording. Choose one pattern for a library and reuse it across seasons.",
-						],
-						image: {
-							src: "/guides/screenshots/app-regex-preview.png",
-							alt: "Rename.Tools regex preview converting a noisy episode filename into a cleaner S01E03 name",
-							caption:
-								"Start with one episode pattern, confirm the preview, then apply the same rule to the rest of the season.",
-						},
-						steps: [
-							"Normalize separators by replacing dots or underscores with spaces.",
-							"Use regex to preserve S01E03 style episode numbers.",
-							"Remove quality tags like 720p, 1080p, WEB-DL, or BluRay when they are not needed.",
-							"Use Title Case only after regex extraction, so show names become readable.",
-							"Preview the full season before executing.",
-						],
-						examples: [
-							{
-								before: "show.name.s01e03.1080p.web-dl.mkv",
-								after: "Show Name S01E03.mkv",
-							},
-						],
-					},
-					{
-						title: "Keep media server compatibility",
-						body: [
-							"Use consistent separators and avoid changing extensions unless you are intentionally converting files elsewhere. Rename.Tools changes names, not media formats.",
-							"For shared libraries, prefer predictable patterns over clever names. A boring format that sorts correctly is easier to maintain and easier for other tools to parse.",
-							"Before renaming a large library, test one album or one season. Media libraries often contain edge cases: bonus tracks, specials, trailers, commentary files, subtitles, and multi-part episodes.",
-						],
-					},
-					{
-						title: "Handle subtitles and extras separately",
-						body: [
-							"Subtitle files need to keep the same base name as the video file so players can auto-detect them. Do not run a video-only cleanup on .srt or .ass files unless the resulting base names still match.",
-							"Extras such as trailers, interviews, samples, and behind-the-scenes clips should usually be filtered into a separate batch. They often do not follow the same S01E03 pattern as episodes.",
-						],
-						steps: [
-							"Filter video files and subtitle files separately when their naming rules differ.",
-							"After renaming episodes, compare subtitle base names with matching video names.",
-							"Keep extras in a separate folder or add a clear suffix such as extras or trailer.",
-							"Export a plan before renaming a mixed media folder.",
-						],
-						examples: [
-							{
-								before: "show.name.s01e03.1080p.en.srt",
-								after: "Show Name S01E03.en.srt",
-								note: "The subtitle base name still matches the cleaned episode name.",
-							},
-						],
-					},
-				],
-			},
 			zh: {
 				title: "整理音乐库与剧集文件名",
 				description:
-					"用元数据变量、序号规则、正则模式和 TMDb 辅助匹配，清理音乐文件和视频剧集文件名。",
+					"用元数据变量、序号规则和正则模式，清理音乐文件和视频剧集文件名。",
 				intro:
 					"媒体文件常常带着杂乱的发布信息。Rename.Tools 可以把它们整理成适合播放器、媒体服务器和共享文件夹的稳定名称。",
 				categoryLabel: "媒体整理",
@@ -1081,7 +566,7 @@ export const guides: Guide[] = [
 						title: "视频与剧集清理",
 						body: [
 							"视频文件常包含点号、清晰度标签、发布组名称和不统一的集数大小写。可以用正则提取剧名和集数代码，再用查找替换清理分隔符。",
-							"如果你有 TMDb API Key，可以使用媒体刮削功能匹配剧集，并在生成最终名称前引入更准确的标题。如果不想使用 TMDb，也可以只用正则统一 S01E03 这类剧集格式。",
+							"剧集文件名通常统一为 S01E03 这种格式即可，不需要依赖外部数据源。用正则保留集数编号，再统一大小写和分隔符，就能满足播放器和媒体服务器的识别需求。",
 							"对媒体服务器来说，一致性比聪明的命名更重要。给一个媒体库选择一种格式，并跨季复用。",
 						],
 						image: {
@@ -1121,7 +606,7 @@ export const guides: Guide[] = [
 							"视频和字幕规则不同时，分别筛选处理。",
 							"重命名剧集后，检查字幕基础名称是否仍和视频一致。",
 							"花絮文件可以放入单独文件夹，或添加 extras、trailer 等清晰后缀。",
-							"处理混合媒体文件夹前，先导出方案审查。",
+							"处理混合媒体文件夹前，先在预览中确认新旧文件名映射。",
 						],
 						examples: [
 							{
@@ -1142,7 +627,7 @@ export function isIndexableGuideLocale(locale: string): locale is GuideLocale {
 }
 
 export function getGuideLocale(locale: string): GuideLocale {
-	return locale === "zh" ? "zh" : "en";
+	return "zh";
 }
 
 export function getGuideIndexCopy(locale: string) {

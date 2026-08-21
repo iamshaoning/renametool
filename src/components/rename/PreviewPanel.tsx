@@ -2,21 +2,18 @@
 
 import {
 	ChevronRight,
-	Download,
 	Eye,
 	File,
-	FileText,
 	Folder,
 	FolderOpen,
 	Play,
 	Redo2,
 	RotateCcw,
 	Sparkles,
-	Terminal,
 	Undo2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { ExecutionLog } from "@/components/rename/ExecutionLog";
 import {
 	AlertDialog,
@@ -32,12 +29,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { LogEntry } from "@/hooks/useRenameStore";
@@ -344,20 +335,6 @@ function FolderContentsView({ node, depth }: { node: PreviewTreeNode; depth: num
 	);
 }
 
-function esc(s: string) {
-	return s.replace(/"/g, '\\"');
-}
-
-function downloadBlob(content: string, filename: string, type: string) {
-	const blob = new Blob([content], { type });
-	const url = URL.createObjectURL(blob);
-	const a = document.createElement("a");
-	a.href = url;
-	a.download = filename;
-	a.click();
-	URL.revokeObjectURL(url);
-}
-
 export function PreviewPanel({
 	preview,
 	isPreviewComputing = false,
@@ -401,39 +378,6 @@ export function PreviewPanel({
 
 	const affectedCount = affected.length;
 	const hasConflicts = conflicts.length > 0;
-	const affectedItems = affected;
-
-	const exportJSON = useCallback(() => {
-		const data = affectedItems.map((r) => ({
-			oldName: r.original,
-			newName: r.newName,
-			conflict: r.conflict,
-		}));
-		downloadBlob(JSON.stringify(data, null, 2), "rename-plan.json", "application/json");
-	}, [affectedItems]);
-
-	const exportBash = useCallback(() => {
-		const lines = affectedItems.map((r) => `mv "${esc(r.original)}" "${esc(r.newName)}"`);
-		downloadBlob(lines.join("\n"), "rename.sh", "text/plain");
-	}, [affectedItems]);
-
-	const exportPowerShell = useCallback(() => {
-		const lines = affectedItems.map(
-			(r) => `Rename-Item -LiteralPath "${esc(r.original)}" -NewName "${esc(r.newName)}"`,
-		);
-		downloadBlob(lines.join("\n"), "rename.ps1", "text/plain");
-	}, [affectedItems]);
-
-	const exportCSV = useCallback(() => {
-		const header = "oldName,newName";
-		const rows = affectedItems.map((r) => `"${esc(r.original)}","${esc(r.newName)}"`);
-		downloadBlob([header, ...rows].join("\n"), "rename-mapping.csv", "text/csv");
-	}, [affectedItems]);
-
-	const exportReverse = useCallback(() => {
-		const lines = affectedItems.map((r) => `mv "${esc(r.newName)}" "${esc(r.original)}"`);
-		downloadBlob(lines.join("\n"), "rename-undo.sh", "text/plain");
-	}, [affectedItems]);
 
 	const showLog = progress !== null || log.length > 0;
 
@@ -574,47 +518,6 @@ export function PreviewPanel({
 							<Redo2 className="h-3.5 w-3.5" /> {tExecute("redo")}
 						</Button>
 					)}
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button
-								variant="ghost"
-								size="sm"
-								className="gap-1 text-xs"
-								disabled={affectedCount === 0 || isPreviewComputing}
-							>
-								<Download className="h-3.5 w-3.5" /> {tExecute("exportScript")}
-							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end">
-							<DropdownMenuItem onClick={exportBash}>
-								<Terminal className="h-3.5 w-3.5 mr-2" /> Bash (.sh)
-							</DropdownMenuItem>
-							<DropdownMenuItem onClick={exportPowerShell}>
-								<Terminal className="h-3.5 w-3.5 mr-2" /> PowerShell (.ps1)
-							</DropdownMenuItem>
-							<DropdownMenuItem onClick={exportReverse}>
-								<RotateCcw className="h-3.5 w-3.5 mr-2" /> Undo Script (.sh)
-							</DropdownMenuItem>
-						</DropdownMenuContent>
-					</DropdownMenu>
-
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button
-								variant="ghost"
-								size="sm"
-								className="gap-1 text-xs"
-								disabled={affectedCount === 0 || isPreviewComputing}
-							>
-								<FileText className="h-3.5 w-3.5" /> {tExecute("exportPlan")}
-							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end">
-							<DropdownMenuItem onClick={exportJSON}>JSON (.json)</DropdownMenuItem>
-							<DropdownMenuItem onClick={exportCSV}>CSV (.csv)</DropdownMenuItem>
-						</DropdownMenuContent>
-					</DropdownMenu>
-
 					<AlertDialog>
 						<AlertDialogTrigger asChild>
 							<button

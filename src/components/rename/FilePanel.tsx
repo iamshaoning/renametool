@@ -2,11 +2,9 @@
 
 import {
 	ArrowDownAZ,
-	Clapperboard,
 	Database,
 	FileUp,
 	Filter,
-	FlaskConical,
 	FolderOpen,
 	Loader2,
 	Trash2,
@@ -28,7 +26,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { MetadataLoadProgress } from "@/hooks/useMetadataLoader";
 import type { SortMode } from "@/hooks/useRenameStore";
@@ -57,10 +54,6 @@ interface Props {
 	onLoadMetadata?: () => void;
 	metadataProgress?: MetadataLoadProgress;
 	hasMetadata?: boolean;
-	onOpenScraper?: () => void;
-	scraperLoading?: boolean;
-	hasScrapedData?: boolean;
-	hasVideoFiles?: boolean;
 }
 
 export function FilePanel({
@@ -82,14 +75,8 @@ export function FilePanel({
 	onLoadMetadata,
 	metadataProgress,
 	hasMetadata,
-	onOpenScraper,
-	scraperLoading,
-	hasScrapedData,
-	hasVideoFiles,
 }: Props) {
 	const t = useTranslations("rename.files");
-	const [sampleMode, setSampleMode] = useState(false);
-	const [sampleText, setSampleText] = useState("");
 	const [apiSupported, setApiSupported] = useState(false);
 	const [filterOpen, setFilterOpen] = useState(false);
 	const [isLoadingFiles, setIsLoadingFiles] = useState(false);
@@ -223,95 +210,6 @@ export function FilePanel({
 		[onAddFiles],
 	);
 
-	const applySamples = useCallback(() => {
-		const lines = sampleText
-			.split("\n")
-			.map((s) => s.trim())
-			.filter(Boolean);
-
-		const names: string[] = [];
-		const relativePaths: string[] = [];
-
-		for (const line of lines) {
-			const normalized = line.replaceAll("\\", "/");
-			const lastSlash = normalized.lastIndexOf("/");
-			if (lastSlash >= 0) {
-				const base = normalized.slice(lastSlash + 1);
-				if (!base) continue;
-				names.push(base);
-				relativePaths.push(normalized);
-			} else {
-				names.push(normalized);
-				relativePaths.push(normalized);
-			}
-		}
-
-		if (names.length > 0) onAddFiles(names, undefined, relativePaths);
-	}, [sampleText, onAddFiles]);
-
-	const generateRandomSamples = useCallback(() => {
-		const rand = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
-		const pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
-		const pad = (n: number, len: number) => String(n).padStart(len, "0");
-
-		const roots = ["Photos", "Downloads", "Docs", "Music", "Videos", "Work"];
-		const years = ["2022", "2023", "2024", "2025"];
-		const months = Array.from({ length: 12 }, (_, i) => pad(i + 1, 2));
-		const docNames = [
-			"Report (Final)",
-			"Meeting Notes",
-			"Budget",
-			"Proposal",
-			"Invoice",
-			"Resume",
-			"Design Draft",
-			"Plan",
-		];
-		const imageExts = ["jpg", "png", "webp"];
-		const docExts = ["pdf", "docx", "xlsx", "pptx", "txt"];
-		const musicExts = ["mp3", "flac", "m4a"];
-		const videoExts = ["mp4", "mkv", "mov"];
-
-		const total = rand(12, 24);
-		const lines: string[] = [];
-
-		for (let i = 0; i < total; i++) {
-			const root = pick(roots);
-			const year = pick(years);
-			const month = pick(months);
-
-			const kind = rand(1, 100);
-			if (kind <= 45) {
-				const ext = pick(imageExts);
-				const idx = pad(rand(1, 9999), 4);
-				lines.push(
-					`${root}/${year}/${month}/IMG_${year}${month}${pad(rand(1, 28), 2)}_${idx}.${ext}`,
-				);
-			} else if (kind <= 75) {
-				const ext = pick(docExts);
-				const base = pick(docNames);
-				const v = rand(1, 5);
-				lines.push(`${root}/${year}/${base}_v${v}.${ext}`);
-			} else if (kind <= 90) {
-				const ext = pick(musicExts);
-				const track = pad(rand(1, 20), 2);
-				lines.push(
-					`${root}/${pick(["Album A", "Album B", "Live"])}/${track} - ${pick(["Intro", "Theme", "Finale", "Bonus"])}` +
-						`.${ext}`,
-				);
-			} else {
-				const ext = pick(videoExts);
-				lines.push(
-					`${root}/${pick(["Season 01", "Season 02"])}/S${pad(rand(1, 2), 2)}E${pad(rand(1, 12), 2)} - ${pick(
-						["Pilot", "The Return", "Final Cut", "Reunion"],
-					)}.${ext}`,
-				);
-			}
-		}
-
-		setSampleText(lines.join("\n"));
-	}, []);
-
 	const selectedCount = filteredFiles.filter((f) => f.selected).length;
 	const hasActiveFilter = filterConditions.length > 0;
 
@@ -350,21 +248,6 @@ export function FilePanel({
 							</Tooltip>
 						</>
 					)}
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<Button
-								size="sm"
-								variant={sampleMode ? "default" : "outline"}
-								className="h-7 w-7 p-0"
-								onClick={() => setSampleMode(!sampleMode)}
-							>
-								<FlaskConical className="h-3.5 w-3.5" />
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent>
-							<p>{t("sampleMode")}</p>
-						</TooltipContent>
-					</Tooltip>
 					{allFiles.length > 0 && onLoadMetadata && (
 						<Tooltip>
 							<TooltipTrigger asChild>
@@ -391,28 +274,6 @@ export function FilePanel({
 							</TooltipContent>
 						</Tooltip>
 					)}
-					{allFiles.length > 0 && hasVideoFiles && onOpenScraper && (
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<Button
-									size="sm"
-									variant={hasScrapedData ? "default" : "outline"}
-									className="h-7 w-7 p-0"
-									onClick={onOpenScraper}
-									disabled={scraperLoading}
-								>
-									{scraperLoading ? (
-										<Loader2 className="h-3.5 w-3.5 animate-spin" />
-									) : (
-										<Clapperboard className="h-3.5 w-3.5" />
-									)}
-								</Button>
-							</TooltipTrigger>
-							<TooltipContent>
-								<p>{t("scrapeMedia")}</p>
-							</TooltipContent>
-						</Tooltip>
-					)}
 					{allFiles.length > 0 && (
 						<Tooltip>
 							<TooltipTrigger asChild>
@@ -427,32 +288,6 @@ export function FilePanel({
 					)}
 				</div>
 			</div>
-
-			{/* Sample Mode */}
-			{sampleMode && (
-				<div className="border-b px-3 py-2 space-y-2 animate-fade-in">
-					<p className="text-xs text-muted-foreground">{t("sampleHint")}</p>
-					<Textarea
-						value={sampleText}
-						onChange={(e) => setSampleText(e.target.value)}
-						placeholder={t("samplePlaceholder")}
-						className="text-xs min-h-[80px]"
-					/>
-					<div className="flex gap-2">
-						<Button
-							size="sm"
-							variant="outline"
-							onClick={generateRandomSamples}
-							className="flex-1 text-xs"
-						>
-							{t("sampleGenerate")}
-						</Button>
-						<Button size="sm" onClick={applySamples} className="flex-1 text-xs">
-							{t("importFiles")}
-						</Button>
-					</div>
-				</div>
-			)}
 
 			{/* Drop Zone & File List */}
 			<section
@@ -622,14 +457,6 @@ export function FilePanel({
 									</Button>
 								</div>
 							)}
-							<Button
-								variant="link"
-								size="sm"
-								className="gap-1.5 text-xs text-muted-foreground mt-1"
-								onClick={() => setSampleMode(true)}
-							>
-								<FlaskConical className="h-3.5 w-3.5" /> {t("trySampleMode")}
-							</Button>
 						</div>
 					</div>
 				) : (

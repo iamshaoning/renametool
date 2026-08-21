@@ -1,8 +1,8 @@
 "use client";
 
-import { Coffee, Film, Moon, Settings, Sun } from "lucide-react";
+import { Moon, Settings, Sun } from "lucide-react";
 import Image from "next/image";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -20,41 +20,11 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useTmdbConfig } from "@/hooks/useTmdbConfig";
-import { usePathname, useRouter } from "@/i18n/navigation";
 
 export function RenameHeader() {
 	const t = useTranslations("rename.app");
-	const locale = useLocale();
-	const router = useRouter();
-	const pathname = usePathname();
 	const { theme, setTheme } = useTheme();
 	const [settingsOpen, setSettingsOpen] = useState(false);
-	const [apiKeyInput, setApiKeyInput] = useState("");
-	const [apiKeyError, setApiKeyError] = useState<string | null>(null);
-	const tmdbConfig = useTmdbConfig();
-
-	const switchLocale = (newLocale: string) => {
-		router.replace(pathname, { locale: newLocale });
-	};
-
-	const handleSaveApiKey = async () => {
-		if (!apiKeyInput.trim()) return;
-		const result = await tmdbConfig.saveApiKey(apiKeyInput.trim());
-		if (result.success) {
-			setApiKeyError(null);
-			setApiKeyInput("");
-		} else {
-			setApiKeyError(result.error || "unknown");
-		}
-	};
-
-	const handleClearApiKey = () => {
-		tmdbConfig.clearApiKey();
-		setApiKeyInput("");
-		setApiKeyError(null);
-	};
 
 	return (
 		<>
@@ -79,22 +49,6 @@ export function RenameHeader() {
 
 				{/* Right: Controls */}
 				<div className="flex items-center gap-0.5">
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<Button
-								variant="ghost"
-								size="icon"
-								asChild
-								className="h-8 w-8 text-slate-300 hover:bg-slate-800 hover:text-slate-100"
-								aria-label="Support us on Ko-fi"
-							>
-								<a href="https://ko-fi.com/bryanchen0621" target="_blank" rel="noopener noreferrer">
-									<Coffee />
-								</a>
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent>{t("kofiTooltip")}</TooltipContent>
-					</Tooltip>
 					{/* Theme Toggle */}
 					<Button
 						variant="ghost"
@@ -120,32 +74,14 @@ export function RenameHeader() {
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end" className="w-48">
-							<DropdownMenuItem onClick={() => setSettingsOpen(true)}>
-								{t("preferences")}
-							</DropdownMenuItem>
-							<DropdownMenuSeparator />
-							<DropdownMenuItem onClick={() => switchLocale("en")} disabled={locale === "en"}>
-								English
-							</DropdownMenuItem>
-							<DropdownMenuItem onClick={() => switchLocale("zh")} disabled={locale === "zh"}>
-								中文
-							</DropdownMenuItem>
-							<DropdownMenuItem onClick={() => switchLocale("ja")} disabled={locale === "ja"}>
-								日本語
-							</DropdownMenuItem>
-							<DropdownMenuItem onClick={() => switchLocale("es")} disabled={locale === "es"}>
-								Español
-							</DropdownMenuItem>
-							<DropdownMenuItem onClick={() => switchLocale("fr")} disabled={locale === "fr"}>
-								Français
-							</DropdownMenuItem>
-							<DropdownMenuItem onClick={() => switchLocale("ko")} disabled={locale === "ko"}>
-								한국어
-							</DropdownMenuItem>
-						</DropdownMenuContent>
-					</DropdownMenu>
-				</div>
-			</header>
+						<DropdownMenuItem onClick={() => setSettingsOpen(true)}>
+							{t("preferences")}
+						</DropdownMenuItem>
+						<DropdownMenuSeparator />
+					</DropdownMenuContent>
+				</DropdownMenu>
+			</div>
+		</header>
 
 			{/* Settings Dialog (placeholder for future preferences) */}
 			<Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
@@ -159,67 +95,6 @@ export function RenameHeader() {
 					</DialogHeader>
 
 					<div className="space-y-6 py-4">
-						{/* TMDB API Key Section */}
-						<div className="space-y-3">
-							<div className="flex items-center gap-2 text-sm font-medium text-foreground">
-								<Film className="h-4 w-4 text-violet-500" />
-								<span>{t("tmdb.title")}</span>
-								{tmdbConfig.isConfigured && (
-									<span className="ml-auto text-xs text-emerald-500">{t("tmdb.configured")}</span>
-								)}
-							</div>
-							<p className="text-xs text-muted-foreground">{t("tmdb.description")}</p>
-
-							{tmdbConfig.isConfigured ? (
-								<div className="flex items-center gap-2">
-									<code className="flex-1 rounded bg-muted px-2 py-1 text-xs text-muted-foreground">
-										{tmdbConfig.apiKey?.slice(0, 8)}****
-									</code>
-									<Button
-										variant="outline"
-										size="sm"
-										className="h-7 text-xs"
-										onClick={handleClearApiKey}
-									>
-										{t("tmdb.clear")}
-									</Button>
-								</div>
-							) : (
-								<div className="space-y-2">
-									<div className="flex gap-2">
-										<input
-											type="password"
-											value={apiKeyInput}
-											onChange={(e) => {
-												setApiKeyInput(e.target.value);
-												setApiKeyError(null);
-											}}
-											placeholder={t("tmdb.placeholder")}
-											className="flex-1 rounded-md border border-input bg-transparent px-3 py-1 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-										/>
-										<Button
-											size="sm"
-											className="h-7 bg-violet-600 hover:bg-violet-700"
-											onClick={handleSaveApiKey}
-											disabled={!apiKeyInput.trim() || tmdbConfig.isValidating}
-										>
-											{tmdbConfig.isValidating ? t("tmdb.validating") : t("tmdb.save")}
-										</Button>
-									</div>
-									{apiKeyError && (
-										<p className="text-xs text-red-500">
-											{apiKeyError === "invalid" && t("tmdb.errorInvalid")}
-											{apiKeyError === "network" && t("tmdb.errorNetwork")}
-											{apiKeyError === "timeout" && t("tmdb.errorTimeout")}
-											{apiKeyError === "unknown" && t("tmdb.errorUnknown")}
-										</p>
-									)}
-								</div>
-							)}
-						</div>
-
-						<div className="border-t border-border/50" />
-
 						<div className="text-sm text-muted-foreground">{t("preferencesPlaceholder")}</div>
 					</div>
 				</DialogContent>

@@ -39,6 +39,10 @@ yarn-error.log*
 .open-next
 .wrangler
 
+# local pnpm cache (created during install)
+.npm-cache/
+.pnpm-store/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

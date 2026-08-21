@@ -1,5 +1,4 @@
 export { CaseStyleEditor } from "./CaseStyleEditor";
-export { CustomJsEditor } from "./CustomJsEditor";
 export * from "./constants";
 export { FindReplaceEditor } from "./FindReplaceEditor";
 export { InsertEditor } from "./InsertEditor";

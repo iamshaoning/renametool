@@ -10,7 +10,6 @@ export interface FileEntry {
 	modified?: number; // last modified timestamp
 	metadata?: import("@/lib/file-metadata/types").FileMetadata | null;
 	metadataState?: import("@/lib/file-metadata/types").MetadataLoadState;
-	scrapedInfo?: import("@/lib/media-scraper/types").ScrapedMediaInfo | null;
 }
 
 export interface RuleContext {
@@ -25,16 +24,6 @@ export interface RuleContext {
 	metadata?: import("@/lib/file-metadata/types").FileMetadata | null;
 }
 
-/** Options object passed to custom JS rename function */
-export interface CustomJsOptions {
-	name: string;
-	ext: string;
-	fullName: string;
-	index: number;
-	size?: number;
-	modifiedTime?: number;
-}
-
 export type ExtensionScope = "name" | "extension" | "full";
 
 export type RuleType =
@@ -43,7 +32,6 @@ export type RuleType =
 	| "sequence"
 	| "caseStyle"
 	| "regex"
-	| "customJs"
 	| "removeCleanup";
 
 export interface FindReplaceConfig {
@@ -105,11 +93,6 @@ export interface RegexConfig {
 	flags: string;
 }
 
-export interface CustomJsConfig {
-	code: string;
-	lastError?: string;
-}
-
 export interface RemoveCleanupConfig {
 	mode: "chars" | "range" | "cleanup";
 	// chars 模式
@@ -132,7 +115,6 @@ export type RuleConfig =
 	| { type: "sequence"; config: SequenceConfig }
 	| { type: "caseStyle"; config: CaseStyleConfig }
 	| { type: "regex"; config: RegexConfig }
-	| { type: "customJs"; config: CustomJsConfig }
 	| { type: "removeCleanup"; config: RemoveCleanupConfig };
 
 export interface RenameRule {
@@ -195,27 +177,6 @@ export function getDefaultConfig(type: RuleType): RuleConfig {
 			return { type, config: { mode: "lowercase", style: "none" } };
 		case "regex":
 			return { type, config: { pattern: "", replacement: "", flags: "g" } };
-		case "customJs":
-			return {
-				type,
-				config: {
-					code: `/**
- * @param {Object} options
- * @param {string} options.name - 文件名 (不含扩展名)
- * @param {string} options.ext - 扩展名 (不含点, 如 "jpg")
- * @param {string} options.fullName - 完整文件名
- * @param {number} options.index - 序号 (从0开始)
- * @param {number} [options.size] - 文件大小 (字节)
- * @param {number} [options.modifiedTime] - 修改时间戳
- * @returns {string} 新文件名 (不含扩展名)
- */
-function rename(options) {
-  const { name, ext, index } = options;
-  // your code here
-  return name;
-}`,
-				},
-			};
 		case "removeCleanup":
 			return {
 				type,

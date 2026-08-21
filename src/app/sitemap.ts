@@ -3,6 +3,8 @@ import { routing } from "@/i18n/routing";
 import { GUIDE_LOCALES, guides } from "@/lib/guides/content";
 import { SITE_URL } from "@/lib/site";
 
+export const dynamic = "force-static";
+
 export default function sitemap(): MetadataRoute.Sitemap {
 	const routes = [
 		{ path: "", priority: 1.0, changeFrequency: "weekly" as const },
@@ -25,7 +27,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 				alternates: {
 					languages: Object.fromEntries([
 						...routing.locales.map((l) => [l, `${SITE_URL}/${l}${route.path}`] as const),
-						["x-default", `${SITE_URL}/en${route.path}`] as const,
+						["x-default", `${SITE_URL}/zh${route.path}`] as const,
 					]),
 				},
 			});
@@ -40,9 +42,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
 			priority: 0.75,
 			alternates: {
 				languages: {
-					en: `${SITE_URL}/en/guides`,
 					zh: `${SITE_URL}/zh/guides`,
-					"x-default": `${SITE_URL}/en/guides`,
+					"x-default": `${SITE_URL}/zh/guides`,
 				},
 			},
 		});
@@ -57,9 +58,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
 				priority: 0.7,
 				alternates: {
 					languages: {
-						en: `${SITE_URL}/en/guides/${guide.slug}`,
 						zh: `${SITE_URL}/zh/guides/${guide.slug}`,
-						"x-default": `${SITE_URL}/en/guides/${guide.slug}`,
+						"x-default": `${SITE_URL}/zh/guides/${guide.slug}`,
 					},
 				},
 			});

@@ -1,28 +1,16 @@
-import { Github, Heart, Languages, Shield } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { Github, Heart, Shield } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 
 export function Footer() {
 	const t = useTranslations("footer");
-	const locale = useLocale();
-	const guidesLocale = locale === "zh" ? "zh" : "en";
 	const year = new Date().getFullYear();
-
-	const _languages = [
-		{ code: "en", name: "English", nativeName: "English" },
-		{ code: "zh", name: "Chinese", nativeName: "中文" },
-		{ code: "ja", name: "Japanese", nativeName: "日本語" },
-		{ code: "es", name: "Spanish", nativeName: "Español" },
-		{ code: "fr", name: "French", nativeName: "Français" },
-		{ code: "ko", name: "Korean", nativeName: "한국어" },
-		{ code: "de", name: "German", nativeName: "Deutsch" },
-	];
 
 	return (
 		<footer className="border-t bg-muted/30">
 			<div className="mx-auto max-w-5xl px-6 py-12">
 				{/* Main Footer Content */}
-				<div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-5">
+				<div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
 					{/* Brand Column */}
 					<div className="sm:col-span-2">
 						<Link
@@ -90,7 +78,6 @@ export function Footer() {
 							<li>
 								<Link
 									href="/guides"
-									locale={guidesLocale}
 									className="text-muted-foreground transition-colors hover:text-foreground"
 								>
 									{t("guides")}
@@ -130,29 +117,6 @@ export function Footer() {
 						</ul>
 					</div>
 
-					{/* Languages */}
-					<div>
-						<h4 className="mb-4 flex items-center gap-1.5 text-sm font-semibold text-foreground">
-							<Languages className="h-4 w-4" />
-							{t("languagesTitle")}
-						</h4>
-						<ul className="space-y-2.5 text-sm">
-							{_languages.map((lang) => (
-								<li key={lang.code}>
-									<Link
-										href="/"
-										locale={lang.code}
-										className={`transition-colors hover:text-foreground ${
-											locale === lang.code ? "font-medium text-foreground" : "text-muted-foreground"
-										}`}
-										hrefLang={lang.code}
-									>
-										{lang.nativeName}
-									</Link>
-								</li>
-							))}
-						</ul>
-					</div>
 				</div>
 
 				{/* Divider */}

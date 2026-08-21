@@ -1,11 +1,6 @@
 import { create } from "zustand";
 import type { FileMetadata, MetadataLoadState } from "@/lib/file-metadata/types";
-import {
-	autoFixConflicts,
-	computePreview,
-	computePreviewAsync,
-	hasEnabledCustomJsRule,
-} from "@/lib/rename/rules";
+import { autoFixConflicts, computePreview } from "@/lib/rename/rules";
 import type {
 	ExtensionScope,
 	FileEntry,
@@ -349,9 +344,7 @@ function recomputeDerived(
 	const basePreview = derivePreview(filteredFiles, state.rules, state.extensionScope);
 	const preview = state._previewOverride || basePreview;
 	const hasMetadata = deriveHasMetadata(state.files);
-	const isPreviewComputing =
-		hasEnabledCustomJsRule(state.rules) && filteredFiles.some((f) => f.selected);
-	return { filteredFiles, _basePreview: basePreview, preview, hasMetadata, isPreviewComputing };
+	return { filteredFiles, _basePreview: basePreview, preview, hasMetadata, isPreviewComputing: false };
 }
 
 // Batch UI update interval for execute / undo / redo
@@ -363,59 +356,6 @@ let _activationResolver: (() => void) | null = null;
 // ── Zustand store ──
 
 export const useRenameStore = create<RenameState>()((set, get) => {
-	let previewGeneration = 0;
-	let previewTimer: ReturnType<typeof setTimeout> | null = null;
-
-	const queueSandboxedPreview = () => {
-		const snapshot = get();
-		const needsSandbox =
-			hasEnabledCustomJsRule(snapshot.rules) && snapshot.filteredFiles.some((f) => f.selected);
-		const generation = ++previewGeneration;
-
-		if (previewTimer) {
-			clearTimeout(previewTimer);
-			previewTimer = null;
-		}
-
-		if (!needsSandbox) {
-			set({ isPreviewComputing: false });
-			return;
-		}
-
-		set({ isPreviewComputing: true });
-
-		previewTimer = setTimeout(() => {
-			previewTimer = null;
-			if (generation !== previewGeneration) return;
-
-			const latest = get();
-			const files = latest.filteredFiles.map((file) => ({ ...file }));
-			const rules = JSON.parse(JSON.stringify(latest.rules)) as RenameRule[];
-			const { extensionScope } = latest;
-
-			void computePreviewAsync(files, rules, extensionScope)
-				.then((basePreview) => {
-					if (generation !== previewGeneration) return;
-					set((state) => {
-						const previewOverride = state.hasAutoFix
-							? autoFixConflicts(basePreview, state.extensionScope)
-							: null;
-						return {
-							_basePreview: basePreview,
-							_previewOverride: previewOverride,
-							preview: previewOverride ?? basePreview,
-							isPreviewComputing: false,
-						};
-					});
-				})
-				.catch(() => {
-					if (generation === previewGeneration) {
-						set({ isPreviewComputing: false });
-					}
-				});
-		}, 50);
-	};
-
 	type StoreUpdate =
 		| RenameState
 		| Partial<RenameState>
@@ -423,7 +363,6 @@ export const useRenameStore = create<RenameState>()((set, get) => {
 
 	const setAndQueuePreview = (updater: StoreUpdate) => {
 		set(updater);
-		queueSandboxedPreview();
 	};
 
 	return {

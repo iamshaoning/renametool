@@ -12,7 +12,7 @@
 		},
 		"features": {
 			"title": "批量文件重命名功能 | 正则、序号、实时预览 - Rename.Tools",
-			"description": "了解 Rename.Tools 的批量文件重命名功能：正则替换、序号编号、大小写转换、自定义 JavaScript、元数据提取、实时预览、撤销和脚本导出。"
+			"description": "了解 Rename.Tools 的批量文件重命名功能：正则替换、序号编号、大小写转换、元数据提取、实时预览和撤销。"
 		},
 		"guides": {
 			"title": "使用指南 - Rename.Tools",
@@ -37,12 +37,11 @@
 		"features": "功能",
 		"guides": "指南",
 		"about": "关于",
-		"theme": "切换主题",
-		"language": "语言"
+		"theme": "切换主题"
 	},
 	"home": {
 		"heroTitle": "批量重命名数千文件，\n直接在浏览器中完成。",
-		"heroFeature1": "7 种规则类型",
+		"heroFeature1": "6 种规则类型",
 		"heroFeature2": "实时预览",
 		"heroFeature3": "零上传",
 		"heroDescription": "组合正则、序号、大小写转换为强大的规则链。所有操作均在浏览器本地运行——文件永远不会离开你的设备。",
@@ -54,15 +53,15 @@
 		"highlightTitle": "恰到好处的能力，\n为批量重命名而生",
 		"highlightDesc": "一组精心设计的核心能力，让批量重命名快速、安全、可预测。",
 		"hl1Title": "规则链",
-		"hl1Desc": "7 种规则类型自由组合——查找替换、正则、序号、大小写、插入、删除、自定义 JS——按任意顺序串联",
+		"hl1Desc": "6 种规则类型自由组合——查找替换、正则、序号、大小写、插入、删除——按任意顺序串联",
 		"hl2Title": "实时预览",
 		"hl2Desc": "每次修改即时更新，原始名、新名称、冲突信息一目了然",
 		"hl3Title": "冲突检测",
 		"hl3Desc": "重命名前自动发现重复文件名，防止意外覆盖",
 		"hl4Title": "100% 本地 & 隐私",
 		"hl4Desc": "文件永远不离开你的设备。无上传、无服务端处理、无数据留存——关闭标签页即清除一切",
-		"hl5Title": "撤销与脚本导出",
-		"hl5Desc": "内置撤销/重做，还可导出为 Bash 或 PowerShell 脚本，支持离线执行与回滚",
+		"hl5Title": "撤销与重做",
+		"hl5Desc": "内置撤销/重做，操作出错可一键回退整个批次",
 		"hl6Title": "免费且开源",
 		"hl6Desc": "无需注册，无试用期，无付费墙。代码完全公开在 GitHub，社区驱动",
 		"ctaTitle": "别再一个一个重命名文件了。",
@@ -78,7 +77,7 @@
 		"faq3Q": "为什么说它是安全的？",
 		"faq3A": "Rename.Tools 从架构上就不可能从服务器访问你的文件。所有处理都通过 File System Access API 在浏览器本地完成，没有任何数据被传输、存储或记录。代码完全开源，你可以自行验证。此外，内置的撤销功能和实时预览确保你可以在执行前检查并随时回退更改。",
 		"faq4Q": "支持哪些浏览器？",
-		"faq4A": "Rename.Tools 在基于 Chromium 的浏览器（Chrome、Edge、Brave、Arc）中效果最佳，这些浏览器支持 File System Access API 进行直接重命名。在其他浏览器中，你可以使用示例测试模式或导出重命名脚本。",
+		"faq4A": "Rename.Tools 在基于 Chromium 的浏览器（Chrome、Edge、Brave、Arc）中效果最佳，这些浏览器支持 File System Access API 进行直接重命名。在其他浏览器中，请使用支持 File System Access API 的浏览器以获得完整功能。",
 		"faq5Q": "可以处理多少文件？",
 		"faq5A": "Rename.Tools 可以在单次批处理中处理数千个文件。即使文件集很大，实时预览也能即时更新。性能取决于你的浏览器和设备能力。",
 		"useCases": {
@@ -135,8 +134,8 @@
 			"privacy": "隐私与安全"
 		},
 		"rules": {
-			"title": "7 种规则类型，\n自由组合。",
-			"desc": "通过链式组合多条规则构建复杂的重命名操作。每条规则按顺序执行——查找替换、正则表达式、序号、大小写转换、插入、删除和自定义 JavaScript 可任意组合。"
+			"title": "6 种规则类型，\n自由组合。",
+			"desc": "通过链式组合多条规则构建复杂的重命名操作。每条规则按顺序执行——查找替换、正则表达式、序号、大小写转换、插入和删除可任意组合。"
 		},
 		"findReplace": {
 			"title": "查找与替换",
@@ -210,21 +209,6 @@
 			"after": "Trip_to_Paris_2024-03-15.docx",
 			"bestFor": "需要模式匹配的复杂转换"
 		},
-		"customJs": {
-			"title": "自定义 JavaScript",
-			"desc": "编写你自己的转换函数，可访问文件名、扩展名、索引、文件大小和修改时间。当内置规则无法满足需求时使用。",
-			"capabilities": {
-				"c1": "完整的 JavaScript 函数，rename(options) API",
-				"c2": "可访问：文件名、扩展名、索引、大小、修改时间",
-				"c3": "内置代码编辑器，支持语法高亮",
-				"c4": "包含 6 个即用代码示例",
-				"c5": "AI 提示词生成器——复制到 ChatGPT/Claude 获取代码帮助",
-				"c6": "沙箱执行，确保安全"
-			},
-			"before": "DSC_0042.CR2",
-			"after": "2024-03-15_sunset_042.CR2",
-			"bestFor": "为高级用户提供无限灵活性"
-		},
 		"removeCleanup": {
 			"title": "删除与清洗",
 			"desc": "按数量、范围或类型删除字符。快捷清洗模式一键去除数字、符号、空格、中文或英文字符。",
@@ -279,7 +263,7 @@
 		},
 		"automation": {
 			"title": "模板与自动化，\n节省你的时间",
-			"desc": "从一键预设到智能文件检测，Rename.Tools 用强大的自动化功能减少重复工作。"
+			"desc": "从内置模板到自定义预设，Rename.Tools 用强大的自动化功能减少重复工作。"
 		},
 		"automationFeatures": {
 			"templateLibrary": {
@@ -290,25 +274,9 @@
 				"title": "自定义用户预设",
 				"desc": "将规则链保存为可重用预设，支持名称、描述、标签和分类。固定收藏以便快速访问。"
 			},
-			"presetManagement": {
-				"title": "导入、导出与分享",
-				"desc": "将预设导出为 JSON 文件，从同事导入，生成分享链接。你的工作流完全可移植。"
-			},
-			"intelligentSuggestions": {
-				"title": "智能建议",
-				"desc": "自动检测文件类型（照片、音乐、视频剧集、文档），并推荐针对你的文件量身定制的最佳重命名规则。"
-			},
-			"mediaScraper": {
-				"title": "TMDb 影视刮削",
-				"desc": "将视频文件与 The Movie Database 的剧集信息匹配。自动识别剧名、季数和剧集标题，实现完美的媒体库命名。"
-			},
 			"metadataExtraction": {
 				"title": "元数据提取",
 				"desc": "读取照片的 EXIF 数据（日期、相机、分辨率）和音乐文件的音频标签（艺术家、专辑、曲目）。在重命名模板中使用元数据变量。"
-			},
-			"scriptExport": {
-				"title": "脚本导出",
-				"desc": "将整个重命名操作导出为 Bash、PowerShell 或 CSV。生成撤销脚本以反转任何操作。适用于 CI/CD 管道或远程服务器。"
 			}
 		},
 		"privacy": {
@@ -358,29 +326,14 @@
 			"privacyDesc": "所有操作均在浏览器本地运行。无上传，无内容读取，关闭即清除。",
 			"browserCompat": "浏览器兼容性",
 			"browserCompatOk": "你的浏览器支持 File System Access API，可直接在本地重命名。",
-			"browserCompatFail": "你的浏览器不支持 File System Access API，请使用示例测试模式或导出脚本。",
-			"language": "语言",
+			"browserCompatFail": "你的浏览器不支持 File System Access API，请使用 Chrome、Edge 或 Brave 以获得完整功能。",
 			"theme": "主题",
 			"light": "浅色",
 			"dark": "深色",
 			"settings": "设置",
 			"preferences": "偏好设置",
 			"preferencesDesc": "配置应用的全局参数和行为。",
-			"preferencesPlaceholder": "更多设置选项即将推出...",
-			"kofiTooltip": "小小咖啡，大大动力。感谢支持 ☕",
-			"tmdb": {
-				"title": "TMDB API Key",
-				"configured": "✓ 已配置",
-				"description": "用于电影/电视剧元数据自动匹配功能。您可以在 themoviedb.org 获取免费 API Key。",
-				"placeholder": "输入 TMDB API Key",
-				"clear": "清除",
-				"validating": "验证中...",
-				"save": "保存",
-				"errorInvalid": "API Key 无效",
-				"errorNetwork": "网络错误，请重试",
-				"errorTimeout": "验证超时",
-				"errorUnknown": "未知错误"
-			}
+			"preferencesPlaceholder": "更多设置选项即将推出..."
 		},
 		"files": {
 			"title": "文件列表",
@@ -399,13 +352,7 @@
 			"filterByExt": "按扩展名筛选",
 			"noFiles": "暂无文件。导入文件或文件夹以开始。",
 			"loadMetadata": "加载文件元数据（EXIF、音频标签）",
-			"scrapeMedia": "从 TMDb 匹配剧集信息",
 			"loadingMetadata": "正在加载元数据",
-			"sampleMode": "示例测试模式",
-			"trySampleMode": "试用示例测试模式",
-			"sampleGenerate": "随机生成示例",
-			"sampleHint": "输入文件名（每行一个）以测试规则",
-			"samplePlaceholder": "photo_001.jpg\nIMG_20240101.png\nreport (final).docx",
 			"sort": "排序",
 			"sortByImport": "按导入顺序",
 			"sortByNameAsc": "名称 A-Z",
@@ -457,7 +404,6 @@
 				"sequence": "序号",
 				"caseStyle": "大小写/样式",
 				"regex": "正则替换",
-				"customJs": "自定义 JS",
 				"removeCleanup": "删除/清洗"
 			},
 			"findReplace": {
@@ -540,26 +486,6 @@
 				"replacement": "替换为",
 				"flags": "标志",
 				"flagsHint": "如 g, i, m"
-			},
-			"customJs": {
-				"code": "代码",
-				"hint": "定义 rename(options) 函数，返回新文件名",
-				"insertExample": "插入示例",
-				"cancel": "取消",
-				"confirm": "确定",
-				"error": "语法错误",
-				"expandedTitle": "自定义 JavaScript 编辑器",
-				"aiPromptTitle": "AI 提示词",
-				"aiPromptDesc": "复制以下模板发送给 AI (如 ChatGPT、Claude) 来生成重命名代码：",
-				"copyPrompt": "复制提示词",
-				"examples": {
-					"datePrefix": "日期前缀",
-					"sequenceNumber": "序号格式化",
-					"extractNumbers": "提取数字",
-					"cleanupName": "清理文件名",
-					"conditionalPrefix": "条件前缀",
-					"useModifiedTime": "使用修改时间"
-				}
 			},
 			"removeCleanup": {
 				"mode": "模式",
@@ -666,11 +592,7 @@
 			"noPresetsDesc": "预设可以保存您常用的规则组合，方便快速应用到不同的文件批次。",
 			"howToCreate": "创建预设",
 			"howToCreateDesc": "在规则面板中配置好规则后，点击「保存为预设」按钮即可保存。",
-			"howToImport": "导入预设",
-			"howToImportDesc": "点击下方按钮导入之前导出的预设文件（.json 格式）。",
 			"howToCreateSimple": "在规则面板配置规则后点击「保存为预设」",
-			"howToImportSimple": "或点击下方按钮导入已有的预设文件",
-			"importPresets": "导入预设文件",
 			"searchPlaceholder": "搜索预设...",
 			"sortRecent": "最近使用",
 			"sortFrequent": "最常使用",
@@ -683,16 +605,11 @@
 			"categoryVideo": "视频",
 			"categoryMusic": "音乐",
 			"categoryGeneral": "通用",
-			"import": "导入",
-			"export": "导出",
 			"apply": "应用",
 			"uses": "次使用",
 			"justNow": "刚刚",
 			"hoursAgo": "{hours}小时前",
 			"daysAgo": "{days}天前",
-			"importSuccess": "成功导入 {count} 个预设",
-			"importError": "导入预设失败",
-			"shareCopied": "分享链接已复制到剪贴板！",
 			"pinned": "已固定",
 			"unpinned": "已取消固定",
 			"saveSuccess": "预设已保存",
@@ -753,83 +670,6 @@
 				"noData": "无音频标签"
 			}
 		},
-		"intelligence": {
-			"apply": "应用",
-			"startMatch": "开始匹配",
-			"metadataEnhanced": "元数据",
-			"scenarios": {
-				"photo_collection": "检测到照片集合",
-				"music_library": "检测到音乐库",
-				"video_series": "检测到视频系列",
-				"document_archive": "检测到文档归档",
-				"video_scrape": "检测到剧集文件"
-			},
-			"descriptions": {
-				"photo_collection": "按日期和序号整理照片",
-				"music_library": "按艺术家、专辑和曲目号格式化",
-				"video_series": "按顺序编号剧集",
-				"document_archive": "按日期和序号前缀归档文档",
-				"video_scrape": "可从 TMDb 自动获取剧名、季集号、剧集标题"
-			}
-		},
-		"scraper": {
-			"title": "影视媒体刮削",
-			"description": "从 TMDb 匹配视频文件的剧集信息",
-			"cancel": "取消",
-			"apply": "应用",
-			"startSearch": "搜索 TMDb",
-			"searching": "正在搜索 TMDb...",
-			"searchingProgress": "正在搜索 {current}/{total}...",
-			"noGroups": "未在所选视频文件中检测到剧集命名模式",
-			"groupsHint": "从文件名中识别到以下剧集，搜索前可修改标题。",
-			"files": "个文件",
-			"season": "第",
-			"noMatch": "未找到匹配",
-			"matchedCount": "已匹配 {matched}/{total} 个文件",
-			"selectAll": "全选",
-			"deselectAll": "取消全选",
-			"outputFormat": "输出格式",
-			"customTemplate": "自定义模板...",
-			"retry": "重试",
-			"error": "搜索失败：{message}",
-			"selectShow": "选择剧集",
-			"noResults": "无结果",
-			"confidence": {
-				"high": "高",
-				"medium": "中",
-				"low": "低",
-				"none": "无"
-			},
-			"filter": {
-				"all": "全部",
-				"matched": "已匹配",
-				"unmatched": "未匹配"
-			},
-			"steps": {
-				"parse": "识别",
-				"match": "搜索",
-				"confirm": "确认"
-			},
-			"apiKey": {
-				"title": "配置 TMDb API Key",
-				"description": "影视刮削功能需要一个免费的 TMDb API Key，密钥仅存储在本地浏览器中。",
-				"howToGet": "如何获取免费 API Key：",
-				"step1": "访问 themoviedb.org 注册免费账号",
-				"step2": "进入 Settings → API → Create API Key",
-				"step3": "复制 API Read Access Token（v4 auth）",
-				"goToTmdb": "前往 TMDb",
-				"label": "API Read Access Token",
-				"placeholder": "eyJhbGciOiJIUzI1NiJ9...",
-				"required": "请输入 API Key",
-				"invalid": "API Key 无效，请检查后重试。",
-				"network": "网络错误，请检查网络连接。",
-				"timeout": "请求超时，请重试。",
-				"unknown": "验证失败，请重试。",
-				"localOnly": "你的 API Key 仅存储在浏览器本地，不会发送到我们的服务器。",
-				"cancel": "取消",
-				"save": "保存并继续"
-			}
-		},
 		"execute": {
 			"execute": "执行重命名",
 			"clear": "清除规则",
@@ -839,12 +679,6 @@
 			"confirmWarning": "注意：重命名会更改文件的修改时间。",
 			"cancel": "取消",
 			"confirm": "确认",
-			"exportPlan": "导出方案",
-			"exportMap": "导出映射",
-			"exportScript": "导出脚本",
-			"exportPowerShell": "导出 PowerShell",
-			"exportCSV": "导出 CSV",
-			"exportReverse": "导出撤销脚本",
 			"progress": "进度",
 			"log": "执行日志",
 			"success": "成功",
@@ -890,7 +724,6 @@
 		"privacyBadge": "100% 本地处理，零数据上传",
 		"legalTitle": "法律",
 		"resourcesTitle": "资源",
-		"languagesTitle": "语言",
 		"features": "所有功能",
 		"guides": "使用指南",
 		"terms": "服务条款",
@@ -938,7 +771,7 @@
 		"privacyCookies": "4. Cookie 使用",
 		"privacyCookiesDesc": "本服务仅使用必要的功能性 Cookie 来存储你的语言和主题偏好。这些 Cookie：不包含任何个人身份信息；不用于跟踪或分析目的；不会与任何第三方共享；你可以通过浏览器设置随时删除。",
 		"privacyThirdParty": "5. 第三方服务",
-		"privacyThirdPartyDesc": "TMDb API 集成：如果你选择使用影视元数据刮削功能，需要配置 TMDb API 密钥。该密钥仅存储在你的浏览器本地存储中，不会发送到我们的服务器。API 调用直接从你的浏览器发起到 TMDb 服务器，我们不参与或记录这些通信。托管服务：本网站托管在 Vercel 上。Vercel 可能会收集标准的服务器日志（如 IP 地址、访问时间），这些日志由 Vercel 根据其隐私政策管理，我们无法访问这些数据。",
+		"privacyThirdPartyDesc": "托管服务：本网站托管在 GitHub Pages 上。托管平台可能会收集标准的服务器日志（如 IP 地址、访问时间），这些日志由托管平台根据其隐私政策管理，我们无法访问这些数据。",
 		"privacySecurity": "6. 安全措施",
 		"privacySecurityDesc": "虽然我们不存储你的数据，但我们仍采取以下措施保护服务安全：使用 HTTPS 加密所有网络通信；定期更新依赖项以修复已知安全漏洞；开源代码接受社区审查；不使用任何第三方跟踪或分析脚本。",
 		"privacyChildren": "7. 儿童隐私",
@@ -946,7 +779,7 @@
 		"privacyChanges": "8. 政策变更",
 		"privacyChangesDesc": "我们可能会不时更新本隐私政策以反映服务变化或法律要求。任何重大变更将在本页面公布。我们建议你定期查看本页面以了解最新的隐私实践。",
 		"privacyRights": "9. 你的权利",
-		"privacyRightsDesc": "由于我们不收集或存储你的个人数据，传统的数据主体权利（如访问、更正、删除）在技术上不适用。但是，你始终可以：清除浏览器本地存储来删除所有本地保存的偏好设置；选择不使用需要第三方 API 的功能；查看我们的开源代码以验证我们的隐私声明。",
+		"privacyRightsDesc": "由于我们不收集或存储你的个人数据，传统的数据主体权利（如访问、更正、删除）在技术上不适用。但是，你始终可以：清除浏览器本地存储来删除所有本地保存的偏好设置；查看我们的开源代码以验证我们的隐私声明。",
 		"privacyContact": "10. 联系我们",
 		"privacyContactDesc": "如对本隐私政策有任何疑问，请通过 GitHub Issues 联系我们。",
 		"disclaimerTitle": "免责声明",
@@ -964,7 +797,7 @@
 		"disclaimerOpenSource": "6. 开源许可",
 		"disclaimerOpenSourceDesc": "Rename.Tools 根据 GNU Affero General Public License v3.0 (AGPL-3.0) 开源。这意味着：你可以自由使用、复制、修改和分发本软件；你可以将其用于商业或非商业目的；你必须在所有副本中保留版权声明和许可声明；如果你在服务器上修改并运行本软件，你必须向用户公开源代码；本软件按「现状」提供，不附带任何担保。",
 		"disclaimerThirdParty": "7. 第三方内容",
-		"disclaimerThirdPartyDesc": "本工具可能包含或链接到第三方内容、库或服务。我们不对任何第三方内容的准确性、完整性或可用性负责。使用第三方服务（如 TMDb API）时，你还需遵守相应服务的使用条款。",
+		"disclaimerThirdPartyDesc": "本工具可能包含或链接到第三方内容、库或服务。我们不对任何第三方内容的准确性、完整性或可用性负责。",
 		"disclaimerJurisdiction": "8. 司法管辖",
 		"disclaimerJurisdictionDesc": "本免责声明受中华人民共和国法律管辖。如果本声明的任何部分被认定为无效或不可执行，其余部分仍然有效。",
 		"disclaimerAcknowledgment": "9. 确认声明",

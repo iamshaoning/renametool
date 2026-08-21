@@ -4,11 +4,8 @@ import {
 	ArrowLeftRight,
 	ArrowRight,
 	BookTemplate,
-	Brain,
 	Check,
 	ChevronRight,
-	Code2,
-	Download,
 	Eraser,
 	Eye,
 	FileText,
@@ -24,9 +21,7 @@ import {
 	Shield,
 	SortAsc,
 	Sparkles,
-	Terminal,
 	TextCursorInput,
-	Tv,
 	Type,
 	Undo2,
 	Upload,
@@ -83,13 +78,6 @@ const RULES = [
 		borderColor: "border-rose-500/30",
 	},
 	{
-		id: "customJs",
-		icon: Code2,
-		color: "text-cyan-500",
-		bgColor: "bg-cyan-500/10",
-		borderColor: "border-cyan-500/30",
-	},
-	{
 		id: "removeCleanup",
 		icon: Eraser,
 		color: "text-orange-500",
@@ -114,11 +102,7 @@ const PREVIEW_FEATURES = [
 const AUTOMATION_FEATURES = [
 	{ id: "templateLibrary", icon: BookTemplate, color: "text-violet-500" },
 	{ id: "userPresets", icon: Sparkles, color: "text-pink-500" },
-	{ id: "presetManagement", icon: Download, color: "text-blue-500" },
-	{ id: "intelligentSuggestions", icon: Brain, color: "text-amber-500" },
-	{ id: "mediaScraper", icon: Tv, color: "text-cyan-500" },
 	{ id: "metadataExtraction", icon: Zap, color: "text-emerald-500" },
-	{ id: "scriptExport", icon: Terminal, color: "text-orange-500" },
 ] as const;
 
 /* ─── Privacy features ─────────────────────────────────────────── */
@@ -221,9 +205,7 @@ export default function FeaturesPage() {
 						const capKeys =
 							rule.id === "sequence"
 								? ["c1", "c2", "c3", "c4", "c5", "c6", "c7"]
-								: rule.id === "customJs"
-									? ["c1", "c2", "c3", "c4", "c5", "c6"]
-									: ["c1", "c2", "c3", "c4", "c5"];
+								: ["c1", "c2", "c3", "c4", "c5"];
 
 						return (
 							<div

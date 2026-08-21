@@ -15,7 +15,7 @@ import {
 	getRelatedGuides,
 	isIndexableGuideLocale,
 } from "@/lib/guides/content";
-import { SITE_URL } from "@/lib/site";
+import { SITE_ORIGIN, SITE_URL } from "@/lib/site";
 
 type Props = {
 	params: Promise<{ locale: string; slug: string }>;
@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 	}
 
 	const isIndexable = isIndexableGuideLocale(locale);
-	const canonicalLocale = isIndexable ? locale : "en";
+	const canonicalLocale = isIndexable ? locale : "zh";
 	const canonical = `${SITE_URL}/${canonicalLocale}/guides/${guide.slug}`;
 	const primaryImage = getGuidePrimaryImage(guide);
 	const openGraphImages = primaryImage ? [{ url: `${SITE_URL}${primaryImage.src}` }] : undefined;
@@ -47,13 +47,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 	return {
 		title: `${guide.title} - Rename.Tools`,
 		description: guide.description,
-		metadataBase: new URL(SITE_URL),
+		metadataBase: new URL(SITE_ORIGIN),
 		alternates: {
 			canonical,
 			languages: {
-				en: `${SITE_URL}/en/guides/${guide.slug}`,
 				zh: `${SITE_URL}/zh/guides/${guide.slug}`,
-				"x-default": `${SITE_URL}/en/guides/${guide.slug}`,
+				"x-default": `${SITE_URL}/zh/guides/${guide.slug}`,
 			},
 		},
 		openGraph: {
@@ -88,7 +87,7 @@ export default async function GuideDetailPage({ params }: Props) {
 
 	const copy = getGuideIndexCopy(locale);
 	const relatedGuides = getRelatedGuides(guide, locale);
-	const canonicalLocale = isIndexableGuideLocale(locale) ? locale : "en";
+	const canonicalLocale = isIndexableGuideLocale(locale) ? locale : "zh";
 	const url = `${SITE_URL}/${canonicalLocale}/guides/${guide.slug}`;
 	const primaryImage = getGuidePrimaryImage(guide);
 

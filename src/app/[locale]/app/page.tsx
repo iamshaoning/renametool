@@ -1,24 +1,16 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 import { FilePanel } from "@/components/rename/FilePanel";
-import { IntelligentSuggestions } from "@/components/rename/IntelligentSuggestions";
-import { MediaScraperDialog } from "@/components/rename/MediaScraperDialog";
 import { PreviewPanel } from "@/components/rename/PreviewPanel";
 import { RenameHeader } from "@/components/rename/RenameHeader";
 import { RulePanel } from "@/components/rename/RulePanel";
-import { TmdbApiKeyDialog } from "@/components/rename/TmdbApiKeyDialog";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import { useMediaScraper } from "@/hooks/useMediaScraper";
 import { useMetadataLoader } from "@/hooks/useMetadataLoader";
 import { usePresetsStore } from "@/hooks/usePresetsStore";
 import { useRenameStore } from "@/hooks/useRenameStore";
-import { useTmdbConfig } from "@/hooks/useTmdbConfig";
-
-const VIDEO_EXTS = new Set([".mp4", ".mov", ".avi", ".mkv", ".wmv", ".flv", ".webm", ".m4v"]);
 
 export default function RenameAppPage() {
 	const tPresets = useTranslations("rename.presets");
@@ -128,36 +120,6 @@ export default function RenameAppPage() {
 
 	const savePreset = usePresetsStore((state) => state.savePreset);
 	const metadataLoader = useMetadataLoader();
-	const tmdbConfig = useTmdbConfig();
-	const scraper = useMediaScraper();
-
-	const [scraperOpen, setScraperOpen] = useState(false);
-	const [apiKeyDialogOpen, setApiKeyDialogOpen] = useState(false);
-
-	const hasVideoFiles = useMemo(
-		() => files.some((f) => VIDEO_EXTS.has(f.extension.toLowerCase())),
-		[files],
-	);
-
-	const handleOpenScraper = useCallback(() => {
-		if (!tmdbConfig.isConfigured) {
-			setApiKeyDialogOpen(true);
-		} else {
-			setScraperOpen(true);
-		}
-	}, [tmdbConfig.isConfigured]);
-
-	const handleApiKeySaved = useCallback(
-		async (key: string) => {
-			const valid = await tmdbConfig.saveApiKey(key);
-			if (valid) {
-				setApiKeyDialogOpen(false);
-				setScraperOpen(true);
-			}
-			return valid;
-		},
-		[tmdbConfig.saveApiKey],
-	);
 
 	return (
 		<div className="flex h-screen flex-col bg-background">
@@ -183,20 +145,11 @@ export default function RenameAppPage() {
 						onLoadMetadata={() => metadataLoader.loadMetadata(files, updateFileMetadata)}
 						metadataProgress={metadataLoader.progress}
 						hasMetadata={hasMetadata}
-						onOpenScraper={handleOpenScraper}
-						scraperLoading={scraper.state === "searching"}
-						hasScrapedData={scraper.matchResults.length > 0}
-						hasVideoFiles={hasVideoFiles}
 					/>
 				</ResizablePanel>
 				<ResizableHandle />
 				<ResizablePanel defaultSize={25} minSize={15}>
 					<div className="flex h-full flex-col">
-						<IntelligentSuggestions
-							files={filteredFiles}
-							onApplySuggestion={addRulesFromTemplate}
-							onOpenScraper={handleOpenScraper}
-						/>
 						<div className="flex-1 min-h-0">
 							<RulePanel
 								rules={rules}
@@ -246,24 +199,6 @@ export default function RenameAppPage() {
 					/>
 				</ResizablePanel>
 			</ResizablePanelGroup>
-
-			{/* Media Scraper Dialogs */}
-			<TmdbApiKeyDialog
-				open={apiKeyDialogOpen}
-				onOpenChange={setApiKeyDialogOpen}
-				onSave={handleApiKeySaved}
-				isValidating={tmdbConfig.isValidating}
-			/>
-			{tmdbConfig.apiKey && (
-				<MediaScraperDialog
-					open={scraperOpen}
-					onOpenChange={setScraperOpen}
-					files={filteredFiles}
-					scraper={scraper}
-					apiKey={tmdbConfig.apiKey}
-					onApplyResults={addRulesFromTemplate}
-				/>
-			)}
 		</div>
 	);
 }

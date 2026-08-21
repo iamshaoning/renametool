@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import type { RenameRule } from "@/lib/rename/types";
 import { CaseStyleEditor } from "./CaseStyleEditor";
-import { CustomJsEditor } from "./CustomJsEditor";
 import {
 	RULE_BADGE_COLORS,
 	RULE_BG_COLORS,
@@ -110,9 +109,6 @@ export function RuleCard({ rule, index, onUpdate, onRemove, onClone, hasMetadata
 						<CaseStyleEditor config={rc.config} onChange={updateConfig} />
 					)}
 					{rc.type === "regex" && <RegexEditor config={rc.config} onChange={updateConfig} />}
-					{rc.type === "customJs" && (
-						<CustomJsEditor ruleId={rule.id} config={rc.config} onChange={updateConfig} />
-					)}
 					{rc.type === "removeCleanup" && (
 						<RemoveCleanupEditor config={rc.config} onChange={updateConfig} />
 					)}

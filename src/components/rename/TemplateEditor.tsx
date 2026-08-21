@@ -175,7 +175,7 @@ function SortableBlock({
 				/>
 				<button
 					type="button"
-					className="px-0.5 max-w-[100px] truncate text-left hover:text-foreground"
+					className="px-0.5 max-w-25 truncate text-left hover:text-foreground"
 					onClick={() => setIsEditing(true)}
 				>
 					{block.value || "..."}
@@ -275,7 +275,7 @@ export function TemplateEditor({ value, onChange, variables, placeholder }: Temp
 	return (
 		<div className="space-y-2">
 			{/* Blocks area - main editor */}
-			<div className="min-h-[40px] p-2 border rounded-lg bg-muted/30 flex flex-wrap items-center gap-1.5 transition-colors focus-within:border-primary/50 focus-within:bg-background">
+			<div className="min-h-10 p-2 border rounded-lg bg-muted/30 flex flex-wrap items-center gap-1.5 transition-colors focus-within:border-primary/50 focus-within:bg-background">
 				{blocks.length === 0 && !isAddingText && (
 					<span className="text-xs text-muted-foreground/60 px-1 select-none">
 						{placeholder || "点击下方按钮添加变量或文本..."}

@@ -441,7 +441,7 @@ export function TemplateLibrary({ onApply, trigger }: Props) {
 							{presets.length === 0 ? (
 								<div className="flex flex-col items-center justify-center h-full py-16 px-6">
 									<div className="max-w-md text-center space-y-6">
-										<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 mb-2">
+										<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-primary/10 to-primary/5 mb-2">
 											<Star className="h-8 w-8 text-primary/60" />
 										</div>
 

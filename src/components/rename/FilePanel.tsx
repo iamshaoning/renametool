@@ -383,7 +383,7 @@ export function FilePanel({
 										)}
 									</Button>
 								</PopoverTrigger>
-								<PopoverContent align="end" className="w-[600px]">
+								<PopoverContent align="end" className="w-150">
 									<FilterPanel
 										conditions={filterConditions}
 										logic={filterLogic}

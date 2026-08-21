@@ -93,7 +93,7 @@ function DiffNew({ segments }: { segments: DiffSegment[] }) {
 					return (
 						<span
 							key={`${seg.type}-${i}`}
-							className="bg-success/20 text-success font-medium rounded-sm px-[1px]"
+							className="bg-success/20 text-success font-medium rounded-sm px-px"
 						>
 							{seg.text}
 						</span>
@@ -224,7 +224,7 @@ const PreviewFileItem = React.memo(function PreviewFileItem({
 							</Badge>
 						</TooltipTrigger>
 						{item.errorDetail && (
-							<TooltipContent side="left" className="max-w-xs break-words">
+							<TooltipContent side="left" className="max-w-xs wrap-break-word">
 								<p className="text-xs">{item.errorDetail}</p>
 							</TooltipContent>
 						)}

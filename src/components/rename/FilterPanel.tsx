@@ -108,12 +108,12 @@ export function FilterPanel({
 					<div key={condition.id} className="flex items-center gap-2">
 						<div className="flex items-center gap-2 flex-1 min-w-0">
 							{index === 0 ? (
-								<span className="text-xs text-muted-foreground w-[60px] shrink-0 text-center">
+								<span className="text-xs text-muted-foreground w-15 shrink-0 text-center">
 									条件
 								</span>
 							) : (
 								<Select value={logic} onValueChange={(v) => onSetLogic(v as "AND" | "OR")}>
-									<SelectTrigger size="sm" className="h-8 w-[60px] shrink-0 text-xs">
+									<SelectTrigger size="sm" className="h-8 w-15 shrink-0 text-xs">
 										<SelectValue />
 									</SelectTrigger>
 									<SelectContent>
@@ -134,7 +134,7 @@ export function FilterPanel({
 									onUpdateCondition(condition.id, { field: newField, operator: validOperator });
 								}}
 							>
-								<SelectTrigger size="sm" className="h-8 w-[100px] shrink-0 text-xs">
+								<SelectTrigger size="sm" className="h-8 w-25 shrink-0 text-xs">
 									<SelectValue />
 								</SelectTrigger>
 								<SelectContent>
@@ -152,7 +152,7 @@ export function FilterPanel({
 									onUpdateCondition(condition.id, { operator: v as FilterOperator })
 								}
 							>
-								<SelectTrigger size="sm" className="h-8 w-[100px] shrink-0 text-xs">
+								<SelectTrigger size="sm" className="h-8 w-25 shrink-0 text-xs">
 									<SelectValue />
 								</SelectTrigger>
 								<SelectContent>
@@ -169,7 +169,7 @@ export function FilterPanel({
 								onChange={(e) => onUpdateCondition(condition.id, { value: e.target.value })}
 								placeholder={getPlaceholder(condition.field)}
 								type={condition.field === "modified" ? "date" : "text"}
-								className="h-8 text-xs flex-1 min-w-[120px]"
+								className="h-8 text-xs flex-1 min-w-30"
 							/>
 
 							{(condition.field === "name" || condition.field === "extension") && (

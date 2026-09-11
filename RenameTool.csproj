@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RootNamespace>RenameTool</RootNamespace>
+    <AssemblyName>RenameTool</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <Version>1.0.0</Version>
+    <Product>RenameTool</Product>
+    <Description>本地批量文件重命名工具</Description>
+    <!-- 单文件发布参数（publish 时启用）：
+         dotnet publish -c Release -r win-x64 -p:PublishSingleFile=true -p:SelfContained=true -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 供窗口/任务栏使用的图标资源（同时通过 ApplicationIcon 嵌入 exe） -->
+    <Resource Include="Assets\app.ico" />
+  </ItemGroup>
+
+</Project>

@@ -63,6 +63,10 @@ jobs:
           if ($exists) { Write-Host "$tag already released - skip" }
           else { Write-Host "$tag is new - will publish" }
           "exists=$($exists.ToString().ToLower())" >> $env:GITHUB_OUTPUT
+          # GitHub 会在 pwsh step 末尾自动补一行 `exit $LASTEXITCODE`。上面那次
+          # gh release view 查不到 tag 时退出码是 1（这正是"未发布"的信号），
+          # 不显式 exit 0 的话整个 step 会被判成失败。
+          exit 0
 
       - name: 打包 full / min
         if: steps.check.outputs.exists == 'false'

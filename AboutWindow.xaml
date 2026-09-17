@@ -1,0 +1,283 @@
+﻿<local:ToolWindow x:Class="RenameTool.AboutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:RenameTool"
+        Title="关于"
+        Icon="Assets/app.ico"
+        Width="580" Height="560" MinWidth="460" MinHeight="380"
+        WindowStyle="None" ResizeMode="CanResize" ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        FontFamily="Microsoft YaHei UI, Microsoft YaHei"
+        UseLayoutRounding="True"
+        Background="{DynamicResource WindowBrush}"
+        Foreground="{DynamicResource TextBrush}"
+        PreviewKeyDown="Window_PreviewKeyDown">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0" ResizeBorderThickness="6" CornerRadius="{StaticResource RadiusL}"
+                      GlassFrameThickness="0" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <local:BoolVisibilityConverter x:Key="BoolVis" />
+
+        <!-- 顶部导航：胶囊内的分段选项卡 -->
+        <Style x:Key="NavTab" TargetType="RadioButton">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="{StaticResource FontSizeSubtitle}" />
+            <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+            <!-- 悬停底色：由模板里的过渡层淡入 -->
+            <Setter Property="local:HoverFade.Background" Value="{DynamicResource SurfaceHoverBrush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Grid>
+                            <!-- 悬停过渡层压在 Bd 之下：选中态是不透明底色，天然压过悬停色 -->
+                            <Border x:Name="Hover" Background="{TemplateBinding local:HoverFade.Background}"
+                                    CornerRadius="{StaticResource RadiusM}" Margin="2" Opacity="0" IsHitTestVisible="False" />
+                            <Border x:Name="Bd" CornerRadius="{StaticResource RadiusM}" Padding="20,7" Margin="2"
+                                    Background="Transparent">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity"
+                                                             To="1" Duration="0:0:0.14">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity"
+                                                             To="0" Duration="0:0:0.16">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SurfaceBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 快捷键按键胶囊 -->
+        <Style x:Key="KeyChip" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="Padding" Value="9,3" />
+        </Style>
+
+        <!-- 信息行：标签 + 值 -->
+        <Style x:Key="InfoLabel" TargetType="TextBlock">
+            <Setter Property="Width" Value="80" />
+            <Setter Property="FontSize" Value="{StaticResource FontSizeSubtitle}" />
+            <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="InfoValue" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="{StaticResource FontSizeSubtitle}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <!-- 小节标题 -->
+        <Style x:Key="SectionTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="{StaticResource FontSizeSubtitle}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+    </Window.Resources>
+
+    <Border Background="{DynamicResource WindowBrush}"
+            BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1" CornerRadius="{StaticResource RadiusL}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="44" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="52" />
+            </Grid.RowDefinitions>
+
+            <!-- 标题栏 -->
+            <Border Grid.Row="0" Background="{DynamicResource WindowBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid Margin="16,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="关于本程序" FontSize="{StaticResource FontSizeTitleHalf}" FontWeight="SemiBold"
+                               VerticalAlignment="Center" Foreground="{DynamicResource TextBrush}" />
+                    <Button Grid.Column="2" Style="{StaticResource ToolCloseButton}" Click="Close_Click" />
+                </Grid>
+            </Border>
+
+            <!-- 分段导航 -->
+            <Border Grid.Row="1" Margin="16,14,16,0" Padding="4" CornerRadius="{StaticResource RadiusL}"
+                    Background="{DynamicResource SurfaceAltBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton x:Name="NavAbout" Content="关于程序" GroupName="AboutNav"
+                                 Style="{StaticResource NavTab}" IsChecked="True" />
+                    <RadioButton x:Name="NavKeys" Content="快捷键" GroupName="AboutNav"
+                                 Style="{StaticResource NavTab}" />
+                </StackPanel>
+            </Border>
+
+            <!-- 内容区 -->
+            <ScrollViewer Grid.Row="2" Margin="16,14,16,0" VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <Grid>
+
+                    <!-- ① 关于程序 -->
+                    <StackPanel Visibility="{Binding IsChecked, ElementName=NavAbout, Converter={StaticResource BoolVis}}">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                            <Border Width="58" Height="58" CornerRadius="15" Background="{DynamicResource AccentBrush}">
+                                <Path Style="{StaticResource IconPathWhite}" Width="32" Height="32"
+                                      Data="{StaticResource Icon.PenLine}" />
+                            </Border>
+                            <StackPanel VerticalAlignment="Center" Margin="15,0,0,0">
+                                <TextBlock Text="批量文件重命名" FontSize="{StaticResource FontSizeDisplay}" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextBrush}" />
+                                <TextBlock x:Name="VersionText" FontSize="{StaticResource FontSizeBodyHalf}" Margin="0,4,0,0"
+                                           Foreground="{DynamicResource MutedTextBrush}" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Border Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                CornerRadius="{StaticResource RadiusL}" Padding="16,14">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                    <TextBlock Style="{StaticResource InfoLabel}" Text="程序版本" />
+                                    <TextBlock x:Name="VersionValue" Style="{StaticResource InfoValue}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                    <TextBlock Style="{StaticResource InfoLabel}" Text="开发者" />
+                                    <TextBlock Style="{StaticResource InfoValue}" Text="iamshaoning" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                    <TextBlock Style="{StaticResource InfoLabel}" Text="项目地址" />
+                                    <Path Style="{StaticResource IconPathAccent}" Width="16" Height="16"
+                                          Margin="0,0,6,0" VerticalAlignment="Center"
+                                          Data="{StaticResource Icon.Globe}" />
+                                    <TextBlock Style="{StaticResource InfoValue}">
+                                        <Hyperlink NavigateUri="https://github.com/iamshaoning/renametool"
+                                                   RequestNavigate="Hyperlink_RequestNavigate"
+                                                   Foreground="{DynamicResource AccentBrush}"
+                                                   TextDecorations="None">https://github.com/iamshaoning/renametool</Hyperlink>
+                                    </TextBlock>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource InfoLabel}" Text="问题反馈" />
+                                    <Path Style="{StaticResource IconPathAccent}" Width="16" Height="16"
+                                          Margin="0,0,6,0" VerticalAlignment="Center"
+                                          Data="{StaticResource Icon.Help}" />
+                                    <TextBlock Style="{StaticResource InfoValue}">
+                                        <Hyperlink NavigateUri="https://github.com/iamshaoning/renametool/issues"
+                                                   RequestNavigate="Hyperlink_RequestNavigate"
+                                                   Foreground="{DynamicResource AccentBrush}"
+                                                   TextDecorations="None">github.com/iamshaoning/renametool/issues</Hyperlink>
+                                    </TextBlock>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Style="{StaticResource SectionTitle}" Text="数据与日志" Margin="2,16,2,8" />
+                        <Border Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                CornerRadius="{StaticResource RadiusL}" Padding="16,14">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                    <TextBlock Style="{StaticResource InfoLabel}" Text="数据目录" />
+                                    <TextBlock Style="{StaticResource InfoValue}" Text="%LOCALAPPDATA%\RenameTool" />
+                                    <TextBlock Style="{StaticResource InfoValue}" Margin="14,0,0,0">
+                                        <Hyperlink x:Name="OpenDataDirLink" Tag="dir"
+                                                   Click="OpenStorage_Click"
+                                                   Foreground="{DynamicResource AccentBrush}"
+                                                   TextDecorations="None">打开目录</Hyperlink>
+                                    </TextBlock>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource InfoLabel}" Text="错误日志" />
+                                    <TextBlock Style="{StaticResource InfoValue}" Text="%LOCALAPPDATA%\RenameTool\error.log" />
+                                    <TextBlock Style="{StaticResource InfoValue}" Margin="14,0,0,0">
+                                        <Hyperlink x:Name="OpenLogLink" Tag="file"
+                                                   Click="OpenStorage_Click"
+                                                   Foreground="{DynamicResource AccentBrush}"
+                                                   TextDecorations="None">打开日志</Hyperlink>
+                                    </TextBlock>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Style="{StaticResource SectionTitle}" Text="声明" Margin="2,16,2,8" />
+                        <TextBlock TextWrapping="Wrap" FontSize="{StaticResource FontSizeBodyHalf}" LineHeight="20" Margin="2,0,2,0"
+                                   Foreground="{DynamicResource MutedTextBrush}"><Run Text="本程序为原创实现，功能与交互参考开源项目 " /><Hyperlink NavigateUri="https://github.com/chenz24/rename.tools" RequestNavigate="Hyperlink_RequestNavigate" Foreground="{DynamicResource AccentBrush}" TextDecorations="None">chenz24/rename.tools</Hyperlink><Run Text=" 编写。" /></TextBlock>
+                    </StackPanel>
+
+                    <!-- ② 快捷键 -->
+                    <StackPanel Visibility="{Binding IsChecked, ElementName=NavKeys, Converter={StaticResource BoolVis}}">
+                        <TextBlock Style="{StaticResource SectionTitle}" Text="全局快捷键" />
+                        <Border Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                CornerRadius="{StaticResource RadiusL}" Padding="16,12">
+                            <ItemsControl x:Name="ShortcutList">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,5">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="176" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{StaticResource KeyChip}"
+                                                    HorizontalAlignment="Left">
+                                                <TextBlock Text="{Binding Keys}" FontSize="{StaticResource FontSizeBody}"
+                                                           Foreground="{DynamicResource TextBrush}" />
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="{Binding Action}" FontSize="{StaticResource FontSizeBodyHalf}"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource MutedTextBrush}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+
+            <!-- 底部 -->
+            <Border Grid.Row="3" Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                <Grid Margin="16,0">
+                    <Button HorizontalAlignment="Right" VerticalAlignment="Center"
+                            Style="{StaticResource DialogCloseButton}" Click="Close_Click" />
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</local:ToolWindow>

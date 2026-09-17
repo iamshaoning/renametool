@@ -1,6 +1,6 @@
 namespace RenameTool.Models;
 
-/// <summary>六种重命名规则。</summary>
+/// <summary>七种重命名规则。</summary>
 public enum RuleType
 {
 	FindReplace,
@@ -9,6 +9,14 @@ public enum RuleType
 	NameTemplate,
 	CaseStyle,
 	RemoveCleanup,
+	PairSwap,
+}
+
+/// <summary>「成对交换」的配对方式。</summary>
+public enum PairSwapMode
+{
+	Adjacent, // 相邻两两交换：第 1↔第 2、第 3↔第 4……
+	Rotate,   // 整体轮换：每个文件取下一个文件的名称，最后一个取第一个的（环状改名）
 }
 
 /// <summary>规则作用于名称的哪个部分。</summary>

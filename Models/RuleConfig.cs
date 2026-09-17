@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 
 namespace RenameTool.Models;
 
@@ -12,7 +13,10 @@ public sealed class RuleConfig : ObservableObject
 	public string Find
 	{
 		get => _find;
-		set => SetProperty(ref _find, value);
+		set
+		{
+			if (SetProperty(ref _find, value)) ValidateRegex();
+		}
 	}
 
 	private string _replace = "";
@@ -42,7 +46,91 @@ public sealed class RuleConfig : ObservableObject
 		get => _useRegex;
 		set
 		{
-			if (SetProperty(ref _useRegex, value)) RaisePropertyChanged(nameof(AllowInlineInput));
+			if (SetProperty(ref _useRegex, value))
+			{
+				RaisePropertyChanged(nameof(AllowInlineInput));
+				ValidateRegex();
+			}
+		}
+	}
+
+	// ── pairSwap ──
+	private PairSwapMode _swapMode = PairSwapMode.Adjacent;
+	/// <summary>「成对交换」的配对方式。</summary>
+	public PairSwapMode SwapMode
+	{
+		get => _swapMode;
+		set => SetProperty(ref _swapMode, value);
+	}
+
+	// ── 正则实时校验（A5） ──
+
+	private string _regexError = "";
+	/// <summary>“查找内容”作为正则时的编译错误信息；为空表示语法合法或未启用变量模式。</summary>
+	[JsonIgnore]
+	public string RegexError
+	{
+		get => _regexError;
+		private set => SetProperty(ref _regexError, value);
+	}
+
+	private string _regexGroups = "";
+	/// <summary>捕获组提示：列出表达式提供的 $n 反向引用；为空表示未启用变量模式。</summary>
+	[JsonIgnore]
+	public string RegexGroups
+	{
+		get => _regexGroups;
+		private set => SetProperty(ref _regexGroups, value);
+	}
+
+	/// <summary>正则匹配超时上限。文件名最长不过几百字符，正常表达式远低于此；
+	/// 但形如 (a+)+$ 的嵌套量词会造成指数级回溯，没有上限时预览界面会直接卡死。</summary>
+	public static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(200);
+
+	/// <summary>规则执行期发现表达式匹配超时（灾难性回溯）时调用：复用同一个提示位，
+	/// 让「本条按未命中处理」这件事在规则面板上看得见，而不是只在结果里悄悄变样。
+	/// 用户再次编辑表达式会重跑 <see cref="ValidateRegex"/> 把它清掉。</summary>
+	internal void ReportRegexTimeout() =>
+		RegexError = $"正则匹配超时（回溯过多，单条上限 {RegexTimeout.TotalMilliseconds:0} 毫秒），本条已按“不匹配”处理。请简化表达式，例如避免 (a+)+ 这类嵌套量词。";
+
+	/// <summary>试编译“查找内容”并统计捕获组，供 UI 实时提示（与 RuleEngine 的编译选项保持一致）。</summary>
+	private void ValidateRegex()
+	{
+		if (!UseRegex || string.IsNullOrEmpty(_find))
+		{
+			RegexError = "";
+			RegexGroups = "";
+			return;
+		}
+
+		try
+		{
+			var options = RegexOptions.None;
+			if (!CaseSensitive) options |= RegexOptions.IgnoreCase;
+			var regex = new Regex(_find, options, RegexTimeout);
+			RegexError = "";
+
+			// 数字组（$1 $2…）与具名组（${name}）：命名组在 .NET 中同时具有编号与名称，两者都列出
+			var refs = new List<string>();
+			foreach (string name in regex.GetGroupNames())
+			{
+				if (int.TryParse(name, out int number))
+				{
+					if (number != 0) refs.Add("$" + number);
+				}
+				else
+				{
+					refs.Add("${" + name + "}");
+				}
+			}
+			RegexGroups = refs.Count == 0
+				? "该表达式没有捕获组，无法使用 $1 等反向引用"
+				: "捕获组：" + string.Join("  ", refs);
+		}
+		catch (ArgumentException ex)
+		{
+			RegexError = "正则表达式无效：" + ex.Message;
+			RegexGroups = "";
 		}
 	}
 

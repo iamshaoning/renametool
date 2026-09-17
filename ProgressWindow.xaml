@@ -1,0 +1,73 @@
+﻿<local:ToolWindow x:Class="RenameTool.ProgressWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:RenameTool"
+        Title="正在处理"
+        Width="440" SizeToContent="Height" MinWidth="360"
+        WindowStyle="None" ResizeMode="NoResize" ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        FontFamily="Microsoft YaHei UI, Microsoft YaHei"
+        UseLayoutRounding="True"
+        Background="{DynamicResource WindowBrush}"
+        Foreground="{DynamicResource TextBrush}"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown"
+        Loaded="Window_Loaded"
+        Closed="Window_Closed">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0" ResizeBorderThickness="0" CornerRadius="{StaticResource RadiusL}"
+                      GlassFrameThickness="0" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <!-- 自绘边框：与主窗口 / 二级窗口统一的外圈细边框；圆角由 DWM 负责裁切 -->
+    <Border BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1" CornerRadius="{StaticResource RadiusL}"
+            Background="{DynamicResource WindowBrush}">
+        <StackPanel Margin="20,18,20,18">
+
+            <!-- 标题行 -->
+            <StackPanel Orientation="Horizontal">
+                <Border Width="28" Height="28" CornerRadius="14"
+                        Background="{DynamicResource AccentSoftBrush}">
+                    <Path Width="15" Height="15" Stretch="Uniform" Fill="{x:Null}"
+                          Stroke="{DynamicResource AccentBrush}"
+                          StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                          StrokeLineJoin="Round"
+                          HorizontalAlignment="Center" VerticalAlignment="Center"
+                          Data="{StaticResource Icon.RotateCw}" />
+                </Border>
+                <TextBlock x:Name="TitleText" Text="正在处理…" Margin="10,0,0,0"
+                           VerticalAlignment="Center" FontSize="{StaticResource FontSizeTitle}" FontWeight="SemiBold"
+                           TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+
+            <!-- 当前处理的条目：单行省略，避免长路径把窗口撑宽 -->
+            <TextBlock x:Name="MessageText" Margin="0,14,0,0" FontSize="{StaticResource FontSizeBodyHalf}"
+                       Foreground="{DynamicResource MutedTextBrush}"
+                       TextTrimming="CharacterEllipsis" />
+
+            <!-- 进度条（已知总量）：沿用全局 ProgressBar 样式 -->
+            <ProgressBar x:Name="Bar" Margin="0,10,0,0" Minimum="0" Maximum="100" Value="0" />
+
+            <!-- 进度条（未知总量）：一段色块来回滑动，表示“正在进行但无法预估进度” -->
+            <Border x:Name="RunnerTrack" Height="6" Margin="0,10,0,0" CornerRadius="3"
+                    ClipToBounds="True" Visibility="Collapsed"
+                    Background="{DynamicResource SurfaceAltBrush}">
+                <Border x:Name="RunnerBar" Width="140" HorizontalAlignment="Left" CornerRadius="3"
+                        Background="{DynamicResource AccentBrush}">
+                    <Border.RenderTransform>
+                        <TranslateTransform x:Name="RunnerOffset" X="-140" />
+                    </Border.RenderTransform>
+                </Border>
+            </Border>
+
+            <!-- 底部：左侧计数 / 右侧中断 -->
+            <Grid Margin="0,12,0,0">
+                <TextBlock x:Name="CounterText" VerticalAlignment="Center" FontSize="{StaticResource FontSizeBody}"
+                           Foreground="{DynamicResource FaintTextBrush}"
+                           TextTrimming="CharacterEllipsis" />
+                <Button x:Name="CancelButton" Content="中断" HorizontalAlignment="Right"
+                        MinWidth="92" Click="Cancel_Click" />
+            </Grid>
+        </StackPanel>
+    </Border>
+</local:ToolWindow>

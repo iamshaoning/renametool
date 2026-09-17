@@ -50,4 +50,22 @@ public static class NameUtils
 	/// <summary>名称完全一致（区分大小写）：用于判断是否真的需要改名（含仅大小写变化）。</summary>
 	public static bool ExactName(string a, string b)
 		=> string.Equals(a, b, StringComparison.Ordinal);
+
+	/// <summary>最大完整路径长度（含目录与文件名）：超过此长度在部分环境（网络盘/旧接口）下无法改名。</summary>
+	public const int MaxFullPathLength = 260;
+
+	/// <summary>
+	/// 生成不冲突的名称：原名可用则返回原名，否则在基名后追加 “ (1)”“ (2)”…（扩展名保留在末尾）。
+	/// </summary>
+	public static string MakeUnique(string name, Func<string, bool> isTaken)
+	{
+		if (!isTaken(name)) return name;
+		(var baseName, var extension) = Split(name);
+		for (int i = 1; i < int.MaxValue; i++)
+		{
+			string candidate = $"{baseName} ({i}){extension}";
+			if (!isTaken(candidate)) return candidate;
+		}
+		return name;
+	}
 }

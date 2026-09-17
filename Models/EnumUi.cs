@@ -91,6 +91,13 @@ public static class EnumUi
 		new() { Value = RuleType.NameTemplate, Label = RuleTypeNames.Label(RuleType.NameTemplate) },
 		new() { Value = RuleType.CaseStyle, Label = RuleTypeNames.Label(RuleType.CaseStyle) },
 		new() { Value = RuleType.RemoveCleanup, Label = RuleTypeNames.Label(RuleType.RemoveCleanup) },
+		new() { Value = RuleType.PairSwap, Label = RuleTypeNames.Label(RuleType.PairSwap) },
+	];
+
+	public static IReadOnlyList<Option> PairSwapModes { get; } =
+	[
+		new() { Value = PairSwapMode.Adjacent, Label = "相邻两两交换" },
+		new() { Value = PairSwapMode.Rotate, Label = "整体轮换" },
 	];
 
 	public static IReadOnlyList<Option> Scopes { get; } =

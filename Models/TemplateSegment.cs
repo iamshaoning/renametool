@@ -23,7 +23,6 @@ public sealed class TemplateSegment : ObservableObject
 	public TemplateSegmentKind Kind { get; init; }
 
 	public bool IsPlainText => Kind == TemplateSegmentKind.Text;
-	public bool IsText => Kind == TemplateSegmentKind.Text;
 	public bool IsVariable => Kind == TemplateSegmentKind.Variable;
 	public bool IsCustom => Kind == TemplateSegmentKind.Custom;
 
@@ -49,13 +48,16 @@ public static class TemplateVariables
 	[
 		new("{n}", "序号", "{n}：当前文件的序号"),
 		new("{name}", "原文件名", "{name}：当前文件名（不含扩展名）"),
+		new("{ext}", "扩展名", "{ext}：原文件的扩展名（不含点）"),
+		new("{size}", "文件大小", "{size}：文件大小（自动进位，如 1.2 MB）"),
 		new("{folderName}", "所在文件夹名", "{folderName}：文件所在文件夹的名称"),
-		new("{relativePath}", "完整路径", "{relativePath}：文件的完整路径（含目录）"),
+		new("{parent}", "上级文件夹名", "{parent}：文件所在文件夹的上一级名称"),
 		new("{date}", "日期", "{date}：当天日期，格式 yyyy-MM-dd"),
 		new("{time}", "时间", "{time}：当前时间，格式 HH-mm-ss"),
 		new("{datetime}", "日期时间", "{datetime}：日期与时间，格式 yyyy-MM-dd-HH-mm-ss"),
 		new("{timestamp}", "时间戳", "{timestamp}：Unix 时间戳（秒）"),
-		new("{date:yyyyMMdd}", "自定义日期", "{date:格式}：按自定义格式输出日期，例如 {date:yyyyMMdd}"),
+		new("{modified}", "修改日期", "{modified}：文件最后修改日期，格式 yyyy-MM-dd"),
+		new("{created}", "创建日期", "{created}：文件创建日期，格式 yyyy-MM-dd"),
 	];
 
 	private static readonly HashSet<string> Known = BuildKnown();
@@ -68,9 +70,9 @@ public static class TemplateVariables
 		return set;
 	}
 
-	/// <summary>判断 {token} 是否为已知变量（{date:任意格式} 也视为变量）。</summary>
+	/// <summary>判断 {token} 是否为已知变量。</summary>
 	public static bool IsKnown(string token)
-		=> Known.Contains("{" + token + "}") || token.StartsWith("date:", StringComparison.Ordinal);
+		=> Known.Contains("{" + token + "}");
 }
 
 /// <summary>名称模板的字符串 ⇄ 片段集合转换。</summary>
@@ -129,7 +131,7 @@ public sealed class SegmentEditor : ObservableObject
 		get
 		{
 			foreach (var segment in Segments)
-				if (!segment.IsText) return true;
+				if (!segment.IsPlainText) return true;
 			return false;
 		}
 	}
@@ -145,7 +147,7 @@ public sealed class SegmentEditor : ObservableObject
 	/// <summary>把变量以模块形式插入末尾；末尾始终保留一个空文本段，便于在变量后继续输入。</summary>
 	public void InsertVariable(string token)
 	{
-		if (Segments.Count == 0 || !(Segments[^1].IsText && Segments[^1].Value.Length == 0))
+		if (Segments.Count == 0 || !(Segments[^1].IsPlainText && Segments[^1].Value.Length == 0))
 			Segments.Add(TemplateSegment.Text(""));
 		Segments.Insert(Segments.Count - 1, TemplateSegment.Variable(token));
 	}
@@ -153,7 +155,7 @@ public sealed class SegmentEditor : ObservableObject
 	/// <summary>在末尾插入一个“自定义文本”模块（内含可编辑的自适应文本框）。</summary>
 	public void InsertCustomText()
 	{
-		if (Segments.Count == 0 || !(Segments[^1].IsText && Segments[^1].Value.Length == 0))
+		if (Segments.Count == 0 || !(Segments[^1].IsPlainText && Segments[^1].Value.Length == 0))
 			Segments.Add(TemplateSegment.Text(""));
 		Segments.Insert(Segments.Count - 1, TemplateSegment.Custom(""));
 	}

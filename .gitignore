@@ -3,6 +3,9 @@ bin/
 obj/
 publish/
 
+# 打包产物（publish.ps1 输出，体积大，不入库）
+dist/
+
 # Rider / VS
 .vs/
 .idea/

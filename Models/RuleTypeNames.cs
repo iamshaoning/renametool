@@ -10,6 +10,7 @@ public static class RuleTypeNames
 		RuleType.NameTemplate => "名称模板",
 		RuleType.CaseStyle => "大小写处理",
 		RuleType.RemoveCleanup => "删除清洗",
+		RuleType.PairSwap => "成对交换",
 		_ => type.ToString(),
 	};
 }

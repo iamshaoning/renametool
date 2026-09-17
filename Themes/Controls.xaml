@@ -1,9 +1,16 @@
-<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:local="clr-namespace:RenameTool">
 
-    <!-- 通用几何常量 -->
-    <CornerRadius x:Key="RadiusS">4</CornerRadius>
-    <CornerRadius x:Key="RadiusM">6</CornerRadius>
+    <!-- 设计令牌（字号 / 圆角）。合并进本字典而非直接挂到 App.Resources：
+         Controls.xaml 内的 StaticResource 只能看到「自身 + 自身合并的字典」，
+         若令牌只挂在 App 层，本文件里的引用会在 XAML 解析期找不到键。 -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="Tokens.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- 滚动条滑块可见性：内容未溢出时收起滑块（配合始终预留的滚动条槽位，避免内容宽度抖动） -->
+    <local:ScrollThumbVisibilityConverter x:Key="ScrollThumbVis" />
 
     <!-- 基础按钮 -->
     <Style TargetType="Button">
@@ -13,36 +20,93 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="14,0" />
         <Setter Property="MinHeight" Value="30" />
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeSubtitle}" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
+        <!-- 悬停底色：由模板里的过渡层淡入；派生样式只改这一条即可换色 -->
+        <Setter Property="local:HoverFade.Background" Value="{DynamicResource SurfaceHoverBrush}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="{StaticResource RadiusM}"
-                            Padding="{TemplateBinding Padding}">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Border>
+                    <!-- 圆角保持默认抗锯齿：先前用 RenderOptions.EdgeMode="Aliased" 消除四角与底色
+                         混合出的过渡像素，但弧线会退化成阶梯状直边，整体看着像被切角的八边形，故改回。 -->
+                    <!-- Root 只承载禁用态的整块淡化，按下交给内层 Press：
+                         两个动画打在不同元素的 Opacity 上，才不会互相顶掉 -->
+                    <Grid x:Name="Root">
+                        <Grid x:Name="Press">
+                            <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="{StaticResource RadiusM}" />
+                            <!-- 悬停过渡层：底层保持原色不动，只让这一层渐显 -->
+                            <Border x:Name="Hover" Margin="{TemplateBinding BorderThickness}"
+                                    Background="{TemplateBinding local:HoverFade.Background}"
+                                    CornerRadius="{StaticResource RadiusM}"
+                                    Opacity="0" IsHitTestVisible="False" />
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Grid>
+                    </Grid>
                     <ControlTemplate.Triggers>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True" />
+                                <Condition Property="IsEnabled" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <MultiTrigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.14">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </MultiTrigger.EnterActions>
+                            <MultiTrigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.16">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </MultiTrigger.ExitActions>
+                        </MultiTrigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Bd" Property="Opacity" Value="0.8" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Press" Storyboard.TargetProperty="Opacity"
+                                                         To="0.8" Duration="0:0:0.08" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Press" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.12">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="Bd" Property="Opacity" Value="0.45" />
+                            <Setter TargetName="Root" Property="Opacity" Value="0.45" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-        <Style.Triggers>
-            <!-- 悬停背景在样式层设置，便于派生样式（主按钮 / 危险按钮）覆盖 -->
-            <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
-            </Trigger>
-        </Style.Triggers>
     </Style>
 
     <!-- 主操作按钮 -->
@@ -51,9 +115,32 @@
         <Setter Property="Foreground" Value="White" />
         <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
         <Setter Property="FontWeight" Value="SemiBold" />
+        <!-- 悬停转为更深的墨绿，交给模板过渡层淡入 -->
+        <Setter Property="local:HoverFade.Background" Value="{DynamicResource AccentHoverBrush}" />
+        <Style.Triggers>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource FaintTextBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- 危险操作按钮（清空 / 删除类统一用这一套）：
+         整块浅红底 + 红字 + 红描边，悬停转为实红底白字。
+         原先只把文字染红、底色与普通按钮无异，醒目度不足，故与主窗口工具栏的
+         「移除所选」统一成同一种红按钮观感。 -->
+    <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Background" Value="{DynamicResource DangerSoftBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource DangerSoftBrush}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <!-- 悬停转为实红底，交给模板过渡层淡入；文字与描边仍是即时切换（0.14s 缓出前段已接近终色） -->
+        <Setter Property="local:HoverFade.Background" Value="{DynamicResource DangerBrush}" />
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="{DynamicResource AccentHoverBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource SurfaceBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource DangerBrush}" />
             </Trigger>
             <Trigger Property="IsEnabled" Value="False">
                 <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
@@ -63,14 +150,13 @@
         </Style.Triggers>
     </Style>
 
-    <!-- 危险操作按钮 -->
-    <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-        <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
-        <Style.Triggers>
-            <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="{DynamicResource DangerSoftBrush}" />
-            </Trigger>
-        </Style.Triggers>
+    <!-- 二级窗口底部右侧的「关闭」按钮（历史 / 预设 / 关于共用）：
+         主按钮观感，高度、内边距与文案统一在一处，各窗口只补自己的对齐属性。 -->
+    <Style x:Key="DialogCloseButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+        <Setter Property="Height" Value="30" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="Padding" Value="18,0" />
+        <Setter Property="Content" Value="关闭" />
     </Style>
 
     <!-- 文本输入 -->
@@ -81,7 +167,7 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="6,0" />
         <Setter Property="MinHeight" Value="30" />
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeSubtitle}" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />
         <Setter Property="Template">
@@ -112,7 +198,7 @@
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeSubtitle}" />
         <Setter Property="Padding" Value="6,0" />
         <Setter Property="MinHeight" Value="30" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -127,13 +213,51 @@
                                       IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                             <ToggleButton.Template>
                                 <ControlTemplate TargetType="ToggleButton">
-                                    <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                                            BorderBrush="{TemplateBinding BorderBrush}"
-                                            BorderThickness="1" CornerRadius="{StaticResource RadiusM}">
+                                    <Grid>
+                                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="1" CornerRadius="{StaticResource RadiusM}" />
+                                        <!-- 悬停过渡层：底色不瞬变，只让这一层渐显 -->
+                                        <Border x:Name="Hover" Margin="1"
+                                                Background="{DynamicResource SurfaceHoverBrush}"
+                                                CornerRadius="{StaticResource RadiusM}"
+                                                Opacity="0" IsHitTestVisible="False" />
                                         <Path x:Name="Arrow" HorizontalAlignment="Right" VerticalAlignment="Center"
                                               Margin="0,0,8,0" Data="M 0 0 L 4 4 L 8 0"
                                               Stroke="{DynamicResource MutedTextBrush}" StrokeThickness="1.5" />
-                                    </Border>
+                                    </Grid>
+                                    <ControlTemplate.Triggers>
+                                        <MultiTrigger>
+                                            <MultiTrigger.Conditions>
+                                                <Condition Property="IsMouseOver" Value="True" />
+                                                <Condition Property="IsEnabled" Value="True" />
+                                            </MultiTrigger.Conditions>
+                                            <MultiTrigger.EnterActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity"
+                                                                         To="1" Duration="0:0:0.14">
+                                                            <DoubleAnimation.EasingFunction>
+                                                                <CubicEase EasingMode="EaseOut" />
+                                                            </DoubleAnimation.EasingFunction>
+                                                        </DoubleAnimation>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </MultiTrigger.EnterActions>
+                                            <MultiTrigger.ExitActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity"
+                                                                         To="0" Duration="0:0:0.16">
+                                                            <DoubleAnimation.EasingFunction>
+                                                                <CubicEase EasingMode="EaseOut" />
+                                                            </DoubleAnimation.EasingFunction>
+                                                        </DoubleAnimation>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </MultiTrigger.ExitActions>
+                                        </MultiTrigger>
+                                    </ControlTemplate.Triggers>
                                 </ControlTemplate>
                             </ToggleButton.Template>
                         </ToggleButton>
@@ -155,9 +279,7 @@
                         </Popup>
                     </Grid>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Toggle" Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
-                        </Trigger>
+                        <!-- 悬停交给 Toggle 模板内的过渡层；展开是离散状态，直接换底色即可 -->
                         <Trigger Property="IsDropDownOpen" Value="True">
                             <Setter TargetName="Toggle" Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
                         </Trigger>
@@ -177,13 +299,41 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBoxItem">
-                    <Border x:Name="Bd" Background="Transparent" Padding="{TemplateBinding Padding}"
-                            CornerRadius="{StaticResource RadiusS}">
-                        <ContentPresenter />
+                    <Border x:Name="Bd" Background="Transparent" CornerRadius="{StaticResource RadiusS}">
+                        <Grid>
+                            <!-- 高亮（鼠标悬停 / 键盘定位）用过渡层渐显 -->
+                            <Border x:Name="Hover" Background="{DynamicResource AccentSoftBrush}"
+                                    CornerRadius="{StaticResource RadiusS}"
+                                    Opacity="0" IsHitTestVisible="False" />
+                            <ContentPresenter Margin="{TemplateBinding Padding}" />
+                        </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsHighlighted" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentSoftBrush}" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.12">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.14">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5" />
@@ -199,31 +349,40 @@
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
+        <!-- 悬停强调描边色：由模板里的过渡层淡入 -->
+        <Setter Property="local:HoverFade.Background" Value="{DynamicResource AccentBrush}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="CheckBox">
                     <StackPanel Orientation="Horizontal" Background="Transparent">
-                        <Border x:Name="Box" Width="16" Height="16" Margin="0,0,6,0"
-                                Background="{DynamicResource SurfaceBrush}"
-                                BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1"
-                                CornerRadius="4" VerticalAlignment="Center">
-                            <!-- 固定 16×16 坐标系，保证对号与横线的几何中心都落在 (8,8)，缩放后垂直居中 -->
-                            <Viewbox Width="11" Height="11" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <Grid Width="16" Height="16">
-                                    <Path x:Name="Check" Data="M 3.6 8.4 L 6.6 11.3 L 12.4 4.7"
-                                          Stretch="None"
-                                          Stroke="White" StrokeThickness="2"
-                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
-                                          Visibility="Collapsed" />
-                                    <!-- 部分选中（不确定态）：对号换成横线 -->
-                                    <Path x:Name="Dash" Data="M 3.6 8 L 12.4 8"
-                                          Stretch="None"
-                                          Stroke="White" StrokeThickness="2"
-                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                          Visibility="Collapsed" />
-                                </Grid>
-                            </Viewbox>
-                        </Border>
+                        <!-- 外层 Grid 只为了给描边过渡层一个与 Box 完全重合的位置：
+                             放进 Box 里会被 1px 描边再内缩一圈，悬停前后描边位置就对不齐了 -->
+                        <Grid Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center">
+                            <Border x:Name="Box"
+                                    Background="{DynamicResource SurfaceBrush}"
+                                    BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1"
+                                    CornerRadius="{StaticResource RadiusS}">
+                                <!-- 固定 16×16 坐标系，保证对号与横线的几何中心都落在 (8,8)，缩放后垂直居中 -->
+                                <Viewbox Width="11" Height="11" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Grid Width="16" Height="16">
+                                        <Path x:Name="Check" Data="M 3.6 8.4 L 6.6 11.3 L 12.4 4.7"
+                                              Stretch="None"
+                                              Stroke="White" StrokeThickness="2"
+                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                              Visibility="Collapsed" />
+                                        <!-- 部分选中（不确定态）：对号换成横线 -->
+                                        <Path x:Name="Dash" Data="M 3.6 8 L 12.4 8"
+                                              Stretch="None"
+                                              Stroke="White" StrokeThickness="2"
+                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                              Visibility="Collapsed" />
+                                    </Grid>
+                                </Viewbox>
+                            </Border>
+                            <!-- 悬停过渡层：只动画这一层的 Opacity，描边色不瞬变 -->
+                            <Border x:Name="Hover" BorderBrush="{TemplateBinding local:HoverFade.Background}"
+                                    BorderThickness="1" CornerRadius="{StaticResource RadiusS}" Opacity="0" IsHitTestVisible="False" />
+                        </Grid>
                         <ContentPresenter VerticalAlignment="Center" />
                     </StackPanel>
                     <ControlTemplate.Triggers>
@@ -238,9 +397,36 @@
                             <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
                             <Setter TargetName="Dash" Property="Visibility" Value="Visible" />
                         </Trigger>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True" />
+                                <Condition Property="IsEnabled" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <MultiTrigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.14">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </MultiTrigger.EnterActions>
+                            <MultiTrigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.16">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </MultiTrigger.ExitActions>
+                        </MultiTrigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5" />
                         </Trigger>
@@ -257,12 +443,41 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
-                    <Border x:Name="Bd" Background="Transparent" Padding="4,2" CornerRadius="6">
-                        <ContentPresenter />
-                    </Border>
+                    <Grid>
+                        <!-- 悬停过渡层压在 Bd 之下：原先两个触发器都写 Bd.Background，
+                             后声明的 IsSelected 生效，也就是选中态压过悬停态，这里保持同样的层次 -->
+                        <Border x:Name="Hover" Background="{DynamicResource SurfaceHoverBrush}"
+                                CornerRadius="{StaticResource RadiusM}" Opacity="0" IsHitTestVisible="False" />
+                        <Border x:Name="Bd" Background="Transparent" Padding="4,2" CornerRadius="{StaticResource RadiusM}">
+                            <ContentPresenter />
+                        </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.14">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.16">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentSoftBrush}" />
@@ -285,15 +500,61 @@
             <Setter.Value>
                 <ControlTemplate TargetType="GridSplitter">
                     <Grid Background="Transparent">
-                        <Border x:Name="Line" Width="2" CornerRadius="1"
-                                Background="Transparent" />
+                        <!-- 悬停 / 拖拽各占一层，都只动画 Opacity：颜色不瞬变，
+                             且拖拽色（Accent）天然叠在悬停色之上，层次与原先「后声明的触发器生效」一致 -->
+                        <Border x:Name="Hover" Width="2" CornerRadius="1"
+                                Background="{DynamicResource BorderStrongBrush}" Opacity="0" IsHitTestVisible="False" />
+                        <Border x:Name="Drag" Width="2" CornerRadius="1"
+                                Background="{DynamicResource AccentBrush}" Opacity="0" IsHitTestVisible="False" />
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Line" Property="Background" Value="{DynamicResource BorderStrongBrush}" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.14">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.16">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsDragging" Value="True">
-                            <Setter TargetName="Line" Property="Background" Value="{DynamicResource AccentBrush}" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Drag" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.08" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Drag" Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.12">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -332,14 +593,58 @@
                     <Grid Background="Transparent">
                         <Track x:Name="PART_Track" IsDirectionReversed="True">
                             <Track.Thumb>
-                                <Thumb>
+                                <!-- SmoothScrollThumb：列表折叠/展开时让滑块长度连续变化，而不是一截一截地跳 -->
+                                <Thumb local:SmoothScrollThumb.Enabled="True">
                                     <Thumb.Template>
                                         <ControlTemplate TargetType="Thumb">
-                                            <Border x:Name="Th" Width="6" Background="{DynamicResource BorderStrongBrush}"
-                                                    CornerRadius="3" />
+                                            <!-- 外层 Canvas 是必需的：Thumb 模板块的高度由 Track 按比例算出（只覆盖可视区域），
+                                                 而滑块长度会随内容折叠/展开被动画拉长到超出该槽位。布局系统一旦发现模板根
+                                                 的期望尺寸大过槽位，就会给模板根加一个等于槽位的 LayoutClip，超出的那截
+                                                 连同底端圆角一起被裁掉，看起来就是滑块下端变直角。
+                                                 Canvas 给子元素无限测量、自身期望尺寸恒为 0，因此 Thumb 永远不会被裁；
+                                                 代价是 Canvas 不给子元素做对齐定位，所以内层用一个宽度绑死为 Thumb 实际宽度
+                                                 的 Grid 把 6px 宽的滑块重新摆回水平居中位置。 -->
+                                            <Canvas>
+                                                <Grid Width="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
+                                                    <!-- VerticalAlignment=Top：动画改的是本条的 Height，
+                                                         Stretch 对齐下「设了 Height 又被夹在中间」会让长条从中心向两头胀，
+                                                         顶对齐才是滚动条滑块该有的「自上而下伸长」 -->
+                                                    <Border x:Name="Th" Width="6" Background="{DynamicResource BorderStrongBrush}"
+                                                            CornerRadius="3" VerticalAlignment="Top"
+                                                            Visibility="{Binding Maximum, RelativeSource={RelativeSource AncestorType=ScrollBar}, Converter={StaticResource ScrollThumbVis}}">
+                                                        <!-- 悬停过渡层放在 Th 内部：长度仍由 SmoothScrollThumb 驱动 Th.Height，
+                                                             内层自动跟随，不必再复制一套尺寸绑定 -->
+                                                        <Border x:Name="Hover" Background="{DynamicResource FaintTextBrush}"
+                                                                CornerRadius="3" Opacity="0" IsHitTestVisible="False" />
+                                                    </Border>
+                                                </Grid>
+                                            </Canvas>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="Th" Property="Background" Value="{DynamicResource FaintTextBrush}" />
+                                                    <Trigger.EnterActions>
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity"
+                                                                                 To="1" Duration="0:0:0.14">
+                                                                    <DoubleAnimation.EasingFunction>
+                                                                        <CubicEase EasingMode="EaseOut" />
+                                                                    </DoubleAnimation.EasingFunction>
+                                                                </DoubleAnimation>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </Trigger.EnterActions>
+                                                    <Trigger.ExitActions>
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity"
+                                                                                 To="0" Duration="0:0:0.16">
+                                                                    <DoubleAnimation.EasingFunction>
+                                                                        <CubicEase EasingMode="EaseOut" />
+                                                                    </DoubleAnimation.EasingFunction>
+                                                                </DoubleAnimation>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </Trigger.ExitActions>
                                                 </Trigger>
                                             </ControlTemplate.Triggers>
                                         </ControlTemplate>
@@ -361,13 +666,13 @@
 
     <!-- 分组小标题 -->
     <Style x:Key="PanelHeader" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeSubtitle}" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
     </Style>
 
     <Style x:Key="FieldLabel" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
         <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
     </Style>
 
@@ -376,7 +681,7 @@
     </Style>
 
     <Style x:Key="HintText" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
         <Setter Property="Foreground" Value="{DynamicResource FaintTextBrush}" />
     </Style>
 
@@ -422,13 +727,48 @@
         <Setter Property="Stroke" Value="White" />
     </Style>
 
+    <!-- ============ 二级窗口标题栏右上角的 × 关闭按钮 ============
+         历史 / 预设 / 关于 / 通用对话框四个窗口原先各写一遍完全相同的
+         「透明底 + 无描边 + Icon.X 图标」按钮，收敛到这里。
+         刻意不基于隐式 Button 样式：那个样式带悬停变色，而这些 × 按钮
+         本来就是无底色设计，继承后反而会多出一块悬停色块。 -->
+    <Style x:Key="ToolCloseButton" TargetType="Button">
+        <Setter Property="Width" Value="34" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="Height" Value="30" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="ToolTip" Value="关闭" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd" Background="{TemplateBinding Background}">
+                        <!-- Icon.X 定义在 Themes/Icons.xaml，与本文件是两份独立字典，
+                             解析期拿不到，故用 DynamicResource 在运行时查应用级资源。 -->
+                        <Path Style="{StaticResource IconPathFaint}" Width="15" Height="15"
+                              Data="{DynamicResource Icon.X}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bd" Property="Opacity" Value="0.8" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style TargetType="ToolTip">
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="8,5" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ToolTip">
@@ -438,6 +778,135 @@
                             Padding="8,5" MaxWidth="460">
                         <ContentPresenter TextBlock.Foreground="{DynamicResource TextBrush}" />
                     </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============ 右键菜单 / 菜单项 / 分隔线（随主题切换） ============ -->
+    <Style TargetType="ContextMenu">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="4" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeSubtitle}" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{StaticResource RadiusM}"
+                            Padding="{TemplateBinding Padding}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <ItemsPresenter />
+                        </ScrollViewer>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- 菜单项：左侧固定勾选列 + 标题 + 子菜单箭头；悬停用主题强调色浅底 -->
+    <Style TargetType="MenuItem">
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeSubtitle}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Grid>
+                        <!-- 悬停过渡层铺满整个菜单项（含 Padding 区），与原先设在 Bd.Background 上的底色同尺寸；
+                             只动画这一层的 Opacity，避免底色瞬变 -->
+                        <Border x:Name="Hover" Background="{DynamicResource AccentSoftBrush}"
+                                CornerRadius="{StaticResource RadiusS}" Opacity="0" IsHitTestVisible="False" />
+                        <Border x:Name="Bd" Background="Transparent" Padding="{TemplateBinding Padding}"
+                                CornerRadius="{StaticResource RadiusS}" SnapsToDevicePixels="True">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="16" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <!-- 勾选标记（用于外观菜单等 IsCheckable 项） -->
+                                <Path x:Name="Check" Grid.Column="0" Visibility="Collapsed"
+                                      Width="11" Height="11" Stretch="Uniform"
+                                      Data="M 4 13 L 10 19 L 20 5"
+                                      Stroke="{DynamicResource AccentBrush}" StrokeThickness="2.5"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                      HorizontalAlignment="Left" VerticalAlignment="Center" />
+                                <ContentPresenter Grid.Column="1" ContentSource="Header" RecognizesAccessKey="True"
+                                                  VerticalAlignment="Center" />
+                                <!-- 子菜单箭头 -->
+                                <Path x:Name="Arrow" Grid.Column="2" Visibility="Collapsed" Margin="12,0,0,0"
+                                      Data="M 0 0 L 4 4 L 0 8" Stretch="None"
+                                      Stroke="{DynamicResource MutedTextBrush}" StrokeThickness="1.5"
+                                      VerticalAlignment="Center" />
+                                <Popup x:Name="PART_Popup" AllowsTransparency="True" Placement="Right"
+                                       IsOpen="{TemplateBinding IsSubmenuOpen}" Focusable="False"
+                                       PopupAnimation="Fade">
+                                    <Border Background="{DynamicResource SurfaceBrush}"
+                                            BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1"
+                                            CornerRadius="{StaticResource RadiusM}" Padding="4" Margin="4,0,0,0">
+                                        <ItemsPresenter />
+                                    </Border>
+                                </Popup>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Check" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="Role" Value="SubmenuHeader">
+                            <Setter TargetName="Arrow" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.14">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.16">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="{DynamicResource FaintTextBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- 菜单分隔线 -->
+    <Style TargetType="Separator">
+        <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="Height" Value="1" />
+        <Setter Property="Margin" Value="8,4" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Separator">
+                    <Border Height="1" Background="{TemplateBinding Background}" />
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

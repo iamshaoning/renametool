@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -11,14 +12,41 @@ namespace RenameTool.Engine;
 /// </summary>
 public static class RuleEngine
 {
+	// ────────────────────────── 正则缓存 ──────────────────────────
+
+	/// <summary>正则实例缓存：预览每敲一个键都会整批重算，而 <see cref="Regex"/> 的编译成本远高于匹配本身，
+	/// 逐文件 <c>new Regex</c> 在大批量下会明显拖慢按键响应。
+	/// 键 = 表达式 + 是否区分大小写（两者共同决定编译结果与超时设置）。</summary>
+	private static readonly ConcurrentDictionary<(string Pattern, bool CaseSensitive), Regex> RegexCache = new();
+
+	/// <summary>缓存上限。规则数量本就很少，超出即整体清空，无需 LRU。</summary>
+	private const int RegexCacheLimit = 64;
+
+	/// <summary>取（或编译并缓存）正则实例；表达式非法时抛 <see cref="ArgumentException"/>，与直接 new 的语义一致。</summary>
+	private static Regex GetRegex(string pattern, bool caseSensitive)
+	{
+		var key = (pattern, caseSensitive);
+		if (RegexCache.TryGetValue(key, out var cached)) return cached;
+
+		var options = RegexOptions.None;
+		if (!caseSensitive) options |= RegexOptions.IgnoreCase;
+		var rx = new Regex(pattern, options, RuleConfig.RegexTimeout);
+
+		if (RegexCache.Count >= RegexCacheLimit) RegexCache.Clear();
+		RegexCache[key] = rx;
+		return rx;
+	}
+
 	// ────────────────────────── 主链 ──────────────────────────
 
 	/// <summary>对单个文件应用整条启用的规则链，返回最终名称。</summary>
 	/// <param name="file">文件</param>
 	/// <param name="ordinal">该文件在激活列表中的序号（从 1 起，供 {n} 变量）</param>
 	/// <param name="sequenceMaps">序号规则预计算结果：ruleId → 文件 → 序号文本</param>
+	/// <param name="swapMaps">成对交换规则预计算结果：ruleId → 文件 → 该文件要拿走的伙伴名称</param>
 	public static string ApplyChain(FileItem file, int ordinal, IReadOnlyList<RenameRule> rules,
-		IReadOnlyDictionary<string, Dictionary<FileItem, string>> sequenceMaps)
+		IReadOnlyDictionary<string, Dictionary<FileItem, string>> sequenceMaps,
+		IReadOnlyDictionary<string, Dictionary<FileItem, string>> swapMaps)
 	{
 		string current = file.Name;
 		foreach (var rule in rules)
@@ -29,6 +57,14 @@ public static class RuleEngine
 				var map = sequenceMaps.TryGetValue(rule.Id, out var m) ? m : null;
 				string token = map is not null && map.TryGetValue(file, out var t) ? t : "";
 				current = ApplySequence(rule, current, file, token, ordinal);
+			}
+			else if (rule.Type == RuleType.PairSwap)
+			{
+				// 交换不是逐文件可算的：伙伴名由 PreviewEngine 按「本条规则之前」的规则链预先算出。
+				// 无伙伴（奇数个文件落单、或未参与）时保持原名。
+				var map = swapMaps.TryGetValue(rule.Id, out var s) ? s : null;
+				if (map is not null && map.TryGetValue(file, out var partnerName))
+					current = SwapByScope(rule.Scope, current, partnerName);
 			}
 			else
 			{
@@ -89,6 +125,19 @@ public static class RuleEngine
 		}
 	}
 
+	/// <summary>成对交换：按作用域取出伙伴名称中对应的部分，与本名称的另一部分重组。</summary>
+	private static string SwapByScope(ExtensionScope scope, string name, string partnerName)
+	{
+		var (myBase, myExt) = NameUtils.Split(name);
+		var (partnerBase, partnerExt) = NameUtils.Split(partnerName);
+		return scope switch
+		{
+			ExtensionScope.Name => NameUtils.Join(partnerBase, myExt),
+			ExtensionScope.Extension => NameUtils.Join(myBase, partnerExt),
+			_ => partnerName,
+		};
+	}
+
 	// ────────────────────────── 各规则实现 ──────────────────────────
 
 	private static string FindReplace(RuleConfig cfg, string text, FileItem file, int ordinal)
@@ -100,14 +149,19 @@ public static class RuleEngine
 		{
 			try
 			{
-				var options = RegexOptions.None;
-				if (!cfg.CaseSensitive) options |= RegexOptions.IgnoreCase;
-				var rx = new Regex(cfg.Find, options);
+				var rx = GetRegex(cfg.Find, cfg.CaseSensitive);
 				return cfg.MatchAll
 					? rx.Replace(text, replacement)
 					: rx.Replace(text, replacement, 1);
 			}
-			catch
+			catch (RegexMatchTimeoutException)
+			{
+				// 灾难性回溯超时：本条按未命中处理，避免整个预览 / 执行被拖死；
+				// 同时把原因写到规则面板上——静默改写结果比卡住更难以察觉。
+				cfg.ReportRegexTimeout();
+				return text;
+			}
+			catch (ArgumentException)
 			{
 				return text; // 非法正则：静默跳过，由 UI 校验提示
 			}
@@ -227,26 +281,16 @@ public static class RuleEngine
 	{
 		if (token == "n") return ordinal.ToString();
 		if (token == "name") return currentName;
+		if (token == "ext") return file.Extension.TrimStart('.');
+		if (token == "size") return file.Size.FormatFileSize();
 		if (token == "folderName") return Path.GetFileName(file.Directory);
-		if (token == "relativePath") return file.FullPath;
+		if (token == "parent") return Path.GetFileName(Path.GetDirectoryName(file.Directory) ?? "");
 		if (token == "date") return DateTime.Now.ToString("yyyy-MM-dd");
 		if (token == "time") return DateTime.Now.ToString("HH-mm-ss");
 		if (token == "datetime") return DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss");
 		if (token == "timestamp") return DateTimeOffset.Now.ToUnixTimeSeconds().ToString();
-		if (token.StartsWith("date:", StringComparison.Ordinal))
-		{
-			string fmt = token["date:".Length..]
-				.Replace("YYYY", "yyyy")
-				.Replace("DD", "dd");
-			try
-			{
-				return DateTime.Now.ToString(fmt);
-			}
-			catch (FormatException)
-			{
-				return "{" + token + "}"; // 非法日期格式：原样保留
-			}
-		}
+		if (token == "modified") return file.Modified.ToString("yyyy-MM-dd");
+		if (token == "created") return file.Created.ToString("yyyy-MM-dd");
 		return null;
 	}
 }

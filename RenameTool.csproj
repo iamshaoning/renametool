@@ -2,16 +2,20 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
-    <RootNamespace>RenameTool</RootNamespace>
+    <TargetFramework>net10.0-windows</TargetFramework>
     <AssemblyName>RenameTool</AssemblyName>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
-    <Version>1.0.0</Version>
-    <Product>RenameTool</Product>
+    <!-- 仅保留简体中文：本程序没有语言切换面板，其余 12 种语言的框架附属程序集
+         （每个约 1.2 MB）属于纯冗余，发布时一并裁掉。 -->
+    <SatelliteResourceLanguages>zh-Hans</SatelliteResourceLanguages>
+    <!-- 版本号规则（每次修改自动加码）：
+         修复 Bug / 调整样式 = 末位 +1（+0.0.1）；新增功能 = 中位 +1（+0.1.0）；
+         各段范围 0-99，首位为大版本，仅由需求方通知变更。 -->
+    <Version>1.16.2</Version>
     <Description>本地批量文件重命名工具</Description>
     <!-- 单文件发布参数（publish 时启用）：
          dotnet publish -c Release -r win-x64 -p:PublishSingleFile=true -p:SelfContained=true -->
@@ -21,5 +25,25 @@
     <!-- 供窗口/任务栏使用的图标资源（同时通过 ApplicationIcon 嵌入 exe） -->
     <Resource Include="Assets\app.ico" />
   </ItemGroup>
+
+  <!-- 单文件发布裁剪：把运行时里本程序完全用不到的组件排除出包。
+       System.Net.Http / System.Data.Common / DataContractSerialization / ReachFramework /
+       System.Drawing.Common 均无任何引用，合计约 13 MB 纯死重。
+       名单只保留实测确实命中的项：net8 时代 WindowsDesktop 运行时会连带带入
+       System.Windows.Forms 系列，升级到 net10 后实测已不再出现在发布项中，
+       相关条目已于 1.16.2 移除（留着是永不命中的死条目）。
+       做法：在 _ComputeFilesToBundle 之前把它们从 ResolvedFileToPublish 中移除，
+       因此只在单文件发布时生效，Debug/普通构建完全不受影响。
+       注意：System.Windows.Controls.Ribbon 虽然也没有引用，但它被 WPF 主题机制在运行时加载，
+       删掉会导致窗口永不出现（已实测），故必须保留。 -->
+  <Target Name="TrimUnusedRuntimePayload" BeforeTargets="_ComputeFilesToBundle"
+          Condition="'$(PublishSingleFile)' == 'true'">
+    <ItemGroup>
+      <_RtUnusedPayload Include="@(ResolvedFileToPublish)"
+                        Condition="$([System.String]::Copy(';System.Net.Http;System.Data.Common;System.Private.DataContractSerialization;ReachFramework;System.Drawing.Common;').Contains(';%(Filename);'))" />
+      <ResolvedFileToPublish Remove="@(_RtUnusedPayload)" />
+    </ItemGroup>
+    <Message Importance="high" Text="TrimUnusedRuntimePayload: 排除 @(_RtUnusedPayload->Count()) 个未使用的运行时组件" />
+  </Target>
 
 </Project>

@@ -7,6 +7,12 @@
                 <ResourceDictionary Source="Themes/Icons.xaml" />
                 <ResourceDictionary Source="Themes/Controls.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- 说明：键盘焦点虚线框的屏蔽不在资源里做。
+                 曾经在这里用一个 x:Key="{x:Static SystemParameters.FocusVisualStyleKey}"
+                 的空模板样式想全局关掉焦点框，实测无效：Control.FocusVisualStyle 的默认值
+                 并不去 Application.Resources 里查那个键，这段样式是死代码。
+                 正确实现见 App.xaml.cs 的 PreviewGotKeyboardFocus 类处理器。 -->
         </ResourceDictionary>
     </Application.Resources>
 </Application>

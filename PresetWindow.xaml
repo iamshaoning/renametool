@@ -1,0 +1,184 @@
+﻿<local:ToolWindow x:Class="RenameTool.PresetWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:RenameTool"
+        Title="规则预设"
+        Icon="Assets/app.ico"
+        Width="580" Height="560" MinWidth="460" MinHeight="380"
+        WindowStyle="None" ResizeMode="CanResize" ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        FontFamily="Microsoft YaHei UI, Microsoft YaHei"
+        UseLayoutRounding="True"
+        Background="{DynamicResource WindowBrush}"
+        Foreground="{DynamicResource TextBrush}"
+        PreviewKeyDown="Window_PreviewKeyDown">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0" ResizeBorderThickness="6" CornerRadius="{StaticResource RadiusL}"
+                      GlassFrameThickness="0" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <local:BoolVisibilityConverter x:Key="BoolVis" />
+
+        <!-- 预设行：名称 + 摘要 + 载入 / 删除 -->
+        <DataTemplate x:Key="PresetRowTemplate">
+            <Border BorderThickness="1" CornerRadius="{StaticResource RadiusL}" Margin="0,0,0,8" Padding="12,10">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="{DynamicResource CardBrush}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+                        <Style.Triggers>
+                            <!-- 选中态：强调色描边 + 浅底，明确区分当前选中的预设（第8项） -->
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource AccentSoftBrush}" />
+                                <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                        <TextBlock Text="{Binding Name}" FontSize="{StaticResource FontSizeSubtitle}" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextBrush}"
+                                   TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}" />
+                        <TextBlock Text="{Binding SummaryText}" FontSize="{StaticResource FontSizeBody}" Margin="0,5,0,0"
+                                   Foreground="{DynamicResource MutedTextBrush}"
+                                   TextTrimming="CharacterEllipsis" ToolTip="{Binding SummaryText}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Height="28" MinHeight="0" Padding="12,0" FontSize="{StaticResource FontSizeBody}" Content="载入"
+                                Command="{Binding DataContext.LoadPresetCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}"
+                                ToolTip="用该预设替换当前规则链" />
+                        <Button Height="28" MinHeight="0" Padding="12,0" FontSize="{StaticResource FontSizeBody}" Margin="8,0,0,0" Content="删除"
+                                Style="{StaticResource DangerButton}"
+                                Command="{Binding DataContext.DeletePresetCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}"
+                                ToolTip="删除该预设">
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </Window.Resources>
+
+    <!-- 自绘边框：与主窗口一致的外圈细边框；圆角由 DWM 负责裁切 -->
+    <Border BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1" CornerRadius="{StaticResource RadiusL}"
+            Background="{DynamicResource WindowBrush}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="44" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="52" />
+        </Grid.RowDefinitions>
+
+        <!-- 标题栏 -->
+        <Border Grid.Row="0" Background="{DynamicResource WindowBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1"
+                MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+            <Grid Margin="16,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="规则预设" FontSize="{StaticResource FontSizeTitleHalf}" FontWeight="SemiBold"
+                           VerticalAlignment="Center" Foreground="{DynamicResource TextBrush}" />
+                <TextBlock Grid.Column="1" Style="{StaticResource HintText}" VerticalAlignment="Center"
+                           Margin="10,0,0,0" TextTrimming="CharacterEllipsis"
+                           Text="保存常用规则组合，一键载入复用" />
+                <Button Grid.Column="2" Style="{StaticResource ToolCloseButton}" Click="Close_Click" />
+            </Grid>
+        </Border>
+
+        <!-- 保存当前规则 -->
+        <Border Grid.Row="1" Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="16,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="预设名称" Style="{StaticResource FieldLabel}"
+                           VerticalAlignment="Center" Margin="0,0,8,0" />
+                <TextBox x:Name="NameBox" Grid.Column="1" MinHeight="30"
+                         ToolTip="输入名称后点击右侧按钮，把当前规则链存为预设；也可点击下方已有预设自动填入其名称，同名将提示覆盖"
+                         KeyDown="NameBox_KeyDown" />
+                <Button Grid.Column="2" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0"
+                        Height="30" MinHeight="0" Padding="14,0" Content="保存当前规则"
+                        IsEnabled="{Binding HasRulesForPreset}"
+                        Click="SavePreset_Click"
+                        ToolTip="把当前规则链保存为预设" />
+            </Grid>
+        </Border>
+
+        <!-- 预设列表 -->
+        <Grid Grid.Row="2" Margin="16,12">
+            <ListBox x:Name="PresetList" ItemsSource="{Binding Presets}" ItemTemplate="{StaticResource PresetRowTemplate}"
+                     Background="Transparent" BorderThickness="0"
+                     SelectionChanged="PresetList_SelectionChanged"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     VirtualizingPanel.IsVirtualizing="True">
+                <ListBox.ItemContainerStyle>
+                    <!-- 允许选中：点击条目即把其名称带入上方输入框，便于覆盖保存（第8项） -->
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Padding" Value="0" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <ContentPresenter />
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+            </ListBox>
+
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                        Visibility="Collapsed" Opacity="0"
+                        local:FadeVisibility.Visible="{Binding HasPresets, Converter={StaticResource BoolVis}, ConverterParameter=invert}">
+                <TextBlock Text="尚未保存任何预设" FontSize="{StaticResource FontSizeSubtitle}" Foreground="{DynamicResource MutedTextBrush}"
+                           HorizontalAlignment="Center" />
+                <TextBlock Text="在上方输入名称并保存当前规则，即可在此处复用" FontSize="{StaticResource FontSizeCaptionHalf}" Margin="0,4,0,0"
+                           Foreground="{DynamicResource FaintTextBrush}" HorizontalAlignment="Center" />
+            </StackPanel>
+        </Grid>
+
+        <!-- 底部 -->
+        <Border Grid.Row="3" Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+            <Grid Margin="16,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Height="30" MinHeight="0" Padding="14,0" Content="导入预设"
+                            Command="{Binding ImportPresetsCommand}"
+                            ToolTip="从 JSON 文件导入规则预设" />
+                    <Button Height="30" MinHeight="0" Padding="14,0" Margin="8,0,0,0" Content="导出预设"
+                            Command="{Binding ExportPresetsCommand}"
+                            ToolTip="把全部预设导出为 JSON 文件，便于备份或迁移到其它机器" />
+                    <Button Height="30" MinHeight="0" Padding="14,0" Margin="8,0,0,0" Content="清空预设"
+                            Style="{StaticResource DangerButton}"
+                            Command="{Binding ClearPresetsCommand}"
+                            ToolTip="删除全部预设" />
+                </StackPanel>
+                <Button Grid.Column="2" HorizontalAlignment="Right" Style="{StaticResource DialogCloseButton}"
+                        Click="Close_Click" />
+            </Grid>
+        </Border>
+    </Grid>
+    </Border>
+</local:ToolWindow>

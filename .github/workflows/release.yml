@@ -1,0 +1,91 @@
+# 推送到 main 时自动打包并发布 GitHub Release。
+#
+# 触发：push 到 main，或在 Actions 页面手动 workflow_dispatch。
+# 版本号：取自 RenameTool.csproj 的 <Version>，与 publish.ps1 读的是同一个值，
+#         因此 dist 里的文件名、tag、Release 标题三者天然一致。
+# 幂等：v<版本> 这个 tag 一旦发布过就跳过打包与发布。所以普通的文档、
+#       重构类推送不会重复建 Release；要出新版本，先把 <Version> 加码再推送。
+#
+# 为什么不用 release.ps1 之类的本地脚本：本地没有 gh CLI，而创建 Release 必须
+# 走 GitHub API 鉴权，直接把这件事交给仓库自带的 GITHUB_TOKEN 最省事。
+
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# gh release create 需要写权限；部分仓库默认给 workflow 的 token 是只读的。
+permissions:
+  contents: write
+
+# 同一分支上的多次推送串行执行，避免两个 run 同时建同一个 Release。
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: 检出源码
+        uses: actions/checkout@v4
+
+      - name: 安装 .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      # 正则与 publish.ps1 中读取版本号的那条保持一致，改一处不会两边跑偏。
+      - name: 读取版本号
+        id: ver
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $raw = Get-Content -LiteralPath 'RenameTool.csproj' -Raw -Encoding UTF8
+          $version = [regex]::Match($raw, '<Version>\s*([^<]+?)\s*</Version>').Groups[1].Value
+          if (-not $version) { throw 'Cannot read <Version> from RenameTool.csproj' }
+          Write-Host "version = $version"
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "tag=v$version" >> $env:GITHUB_OUTPUT
+
+      - name: 检查该版本是否已发布
+        id: check
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = '${{ steps.ver.outputs.tag }}'
+          $ErrorActionPreference = 'Continue'
+          gh release view $tag 2>$null | Out-Null
+          $exists = $LASTEXITCODE -eq 0
+          if ($exists) { Write-Host "$tag already released - skip" }
+          else { Write-Host "$tag is new - will publish" }
+          "exists=$($exists.ToString().ToLower())" >> $env:GITHUB_OUTPUT
+
+      - name: 打包 full / min
+        if: steps.check.outputs.exists == 'false'
+        shell: pwsh
+        run: ./publish.ps1
+
+      - name: 创建 Release 并上传 exe
+        if: steps.check.outputs.exists == 'false'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tag     = '${{ steps.ver.outputs.tag }}'
+          $version = '${{ steps.ver.outputs.version }}'
+          $full    = "dist/RenameTool-$version-full.exe"
+          $min     = "dist/RenameTool-$version-min.exe"
+          foreach ($a in @($full, $min)) {
+            if (-not (Test-Path -LiteralPath $a)) { throw "Missing asset: $a" }
+          }
+          gh release create $tag `
+            $full `
+            $min `
+            --target '${{ github.ref_name }}' `
+            --title "RenameTool v$version" `
+            --generate-notes

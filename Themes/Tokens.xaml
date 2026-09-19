@@ -39,4 +39,9 @@
     <CornerRadius x:Key="RadiusXl">10</CornerRadius>  <!-- 大面板 -->
     <CornerRadius x:Key="Radius2Xl">12</CornerRadius> <!-- Toast 浮层 -->
 
+    <!-- ============ 状态透明度令牌 ============ -->
+    <!-- 禁用态（IsEnabled=False）与「未勾选 / 未启用」的行内容统一用这一档淡化。
+         先前 0.45 与 0.5 两套值散落在 8 处禁用触发器里，肉眼几乎无差别却必须逐个同步。 -->
+    <sys:Double x:Key="DisabledOpacity">0.5</sys:Double>
+
 </ResourceDictionary>

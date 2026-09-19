@@ -59,6 +59,7 @@ public static class SequenceMap
 			}
 
 			long value = cfg.Start;
+			long step = cfg.EffectiveStep;   // 步长 0 会整组同名，RuleConfig 已兜底为 1 并在界面提示
 			bool overflow = false;
 			foreach (var f in ordered)
 			{
@@ -71,9 +72,9 @@ public static class SequenceMap
 				// 起始值与步长均由用户自由输入，累加越界会回绕成负数（例如 -9223372036854775808）。
 				// 这里既不回绕也不夹住：夹住会让边界之后的文件拿到重复序号，静默产出错误名字。
 				// 改为从越界处起把该组剩余文件全部记为「序号越界」，它们不参与改名并在预览里明确标出。
-				if (cfg.Step > 0 && value > long.MaxValue - cfg.Step) overflow = true;
-				else if (cfg.Step < 0 && value < long.MinValue - cfg.Step) overflow = true;
-				else value += cfg.Step;
+				if (step > 0 && value > long.MaxValue - step) overflow = true;
+				else if (step < 0 && value < long.MinValue - step) overflow = true;
+				else value += step;
 			}
 		}
 		return new BuildResult(result, overflowed);

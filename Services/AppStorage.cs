@@ -59,4 +59,27 @@ public static class AppStorage
 		}
 		catch { /* 日志写不进去只能放弃 */ }
 	}
+
+	/// <summary>
+	/// 反序列化失败时把损坏的文件另存为「原名.corrupt-时间戳」，并记入 error.log，返回备份路径。
+	/// 原先解析失败后直接返回空默认值，紧接着的下一次保存就把原文件覆盖掉了 ——
+	/// 用户的预设 / 历史 / 设置在毫无提示的情况下彻底消失，连出事的内容都看不到。
+	/// 留一份副本至少可人工抢救，也让问题在 error.log 里可见。
+	/// </summary>
+	public static string? BackupCorrupt(string path, Exception error)
+	{
+		try
+		{
+			if (!File.Exists(path)) return null;
+			string backup = $"{path}.corrupt-{DateTime.Now:yyyyMMdd-HHmmss}";
+			File.Move(path, backup, overwrite: true);
+			TryAppendErrorLog($"配置文件无法解析，已备份为 {Path.GetFileName(backup)}\n{path}\n{error}");
+			return backup;
+		}
+		catch (Exception ex)
+		{
+			TryAppendErrorLog($"配置文件无法解析，且备份失败\n{path}\n{error}\n备份异常：{ex}");
+			return null;
+		}
+	}
 }

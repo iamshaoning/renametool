@@ -1,3 +1,4 @@
+using System.IO;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
@@ -23,7 +24,10 @@ public sealed class RuleConfig : ObservableObject
 	public string Replace
 	{
 		get => _replace;
-		set => SetProperty(ref _replace, value);
+		set
+		{
+			if (SetProperty(ref _replace, value)) RaisePropertyChanged(nameof(InputWarning));
+		}
 	}
 
 	private bool _caseSensitive;
@@ -139,7 +143,10 @@ public sealed class RuleConfig : ObservableObject
 	public string Text
 	{
 		get => _text;
-		set => SetProperty(ref _text, value);
+		set
+		{
+			if (SetProperty(ref _text, value)) RaisePropertyChanged(nameof(InputWarning));
+		}
 	}
 
 	private bool _useVariables;
@@ -193,8 +200,81 @@ public sealed class RuleConfig : ObservableObject
 	public long Step
 	{
 		get => _step;
-		set => SetProperty(ref _step, value);
+		set
+		{
+			if (SetProperty(ref _step, value)) RaisePropertyChanged(nameof(InputWarning));
+		}
 	}
+
+	// ── 编辑期即时提示（F4） ──
+
+	/// <summary>
+	/// 规则参数里「注定要产出非法文件名」的输入，在编辑这条规则时就说出来，
+	/// 而不是等到底部预览行汇总——那时用户只知道某行有问题，不知道该改哪个输入框。
+	/// 覆盖两类：序号步长为 0、明文里的 Windows 非法字符。
+	/// 正则语法错误另有专门提示位，紧贴“查找内容”输入框显示。
+	/// </summary>
+	[JsonIgnore]
+	public string InputWarning
+	{
+		get
+		{
+			// 步长为 0 时整组文件会落到同一个序号上（彼此全部重名）：序号计算本身按 EffectiveStep 兜底为 1，
+			// 但界面上只会显示一片「冲突」，用户查不出根因，所以在这里把原因说出来。
+			if (Type == RuleType.Sequence && _step == 0)
+				return "步长为 0：所有文件会得到同一个序号（彼此重名）。已按步长 1 处理，请改为非 0 值。";
+
+			foreach ((string label, string text) in LiteralInputs())
+			{
+				if (FirstIllegalChar(text) is not { } bad) continue;
+				return $"{label}含文件名不允许的字符“{DescribeChar(bad)}”。"
+					+ "Windows 文件名不能包含 \\ / : * ? \" < > | 与控制字符，请删掉或用其他字符代替。";
+			}
+
+			return "";
+		}
+	}
+
+	/// <summary>
+	/// 逐项列出「会原样进入新名称」的明文输入。
+	/// 正则模式下的“查找内容”刻意不列：其中的 ? * ( ) 等是表达式语法，不是字面量。
+	/// </summary>
+	private IEnumerable<(string Label, string Text)> LiteralInputs()
+	{
+		switch (Type)
+		{
+			case RuleType.FindReplace:
+				yield return ("“替换为”", _replace);
+				break;
+			case RuleType.Insert:
+				yield return ("“插入内容”", _text);
+				break;
+			case RuleType.NameTemplate:
+				yield return ("“名称模板”", _template);
+				break;
+			case RuleType.Sequence when _seqPosition != SeqPosition.Replace:
+				// 「整体替换为序号」时分隔符不参与名称，此时不必提示
+				yield return ("“分隔符”", _separator);
+				break;
+		}
+	}
+
+	/// <summary>Windows 文件名非法字符（GetInvalidFileNameChars 在 Windows 上已含 0x00–0x1F）。</summary>
+	private static readonly char[] IllegalNameChars = Path.GetInvalidFileNameChars();
+
+	private static char? FirstIllegalChar(string text)
+	{
+		foreach (char c in text)
+			if (Array.IndexOf(IllegalNameChars, c) >= 0) return c;
+		return null;
+	}
+
+	/// <summary>控制字符无法直接显示，转成 \uXXXX，否则用户会以为“明明没输入什么”。</summary>
+	private static string DescribeChar(char c) => char.IsControl(c) ? $"\\u{(int)c:X4}" : c.ToString();
+
+	/// <summary>实际生效的步长：0 会让整组同名，兜底为 1。</summary>
+	[JsonIgnore]
+	public long EffectiveStep => _step == 0 ? 1 : _step;
 
 	private int _padding = 1;
 	public int Padding
@@ -207,7 +287,10 @@ public sealed class RuleConfig : ObservableObject
 	public SeqPosition SeqPosition
 	{
 		get => _seqPosition;
-		set => SetProperty(ref _seqPosition, value);
+		set
+		{
+			if (SetProperty(ref _seqPosition, value)) RaisePropertyChanged(nameof(InputWarning));
+		}
 	}
 
 	/// <summary>前/后缀模式中序号与原名之间的分隔文本；留空则紧贴拼接。</summary>
@@ -215,7 +298,10 @@ public sealed class RuleConfig : ObservableObject
 	public string Separator
 	{
 		get => _separator;
-		set => SetProperty(ref _separator, value);
+		set
+		{
+			if (SetProperty(ref _separator, value)) RaisePropertyChanged(nameof(InputWarning));
+		}
 	}
 
 	/// <summary>名称模板规则使用：整段名称由模板构造（{n} = 序号，{name} = 原名）。</summary>
@@ -223,7 +309,10 @@ public sealed class RuleConfig : ObservableObject
 	public string Template
 	{
 		get => _template;
-		set => SetProperty(ref _template, value);
+		set
+		{
+			if (SetProperty(ref _template, value)) RaisePropertyChanged(nameof(InputWarning));
+		}
 	}
 
 	private SeqScope _scope = SeqScope.Global;

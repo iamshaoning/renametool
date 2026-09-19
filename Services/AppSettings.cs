@@ -43,8 +43,10 @@ public static class SettingsStore
 				? new()
 				: JsonSerializer.Deserialize<AppSettings>(json, Options) ?? new();
 		}
-		catch
+		catch (Exception ex)
 		{
+			// 内容已损坏：先留一份副本再退回默认设置，避免随后的保存把原文件覆盖掉
+			AppStorage.BackupCorrupt(AppStorage.SettingsFile, ex);
 			Current = new();
 		}
 	}

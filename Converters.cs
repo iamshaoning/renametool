@@ -25,6 +25,51 @@ public sealed class IndentGuidesConverter : IValueConverter
 		=> throw new NotSupportedException();
 }
 
+/// <summary>
+/// 主题画刷取值器：转换器原先直接 <c>Application.Current.FindResource(...)</c>，拿到的是调色板里
+/// 那一个已冻结的画刷实例；而 <c>App.ApplyTheme</c> 只替换资源字典中的字典项、不会重新触发转换器，
+/// 于是已存在的预览行徽标底色、日志状态色会一直停在切换前的旧主题色（其余 DynamicResource 已换）。
+/// 这里改为「取一次当前颜色、自己新建一个可变画刷并登记」，主题切换后由 <see cref="RefreshAll"/>
+/// 把颜色同步到新调色板；Freezable 的颜色变化会自行触发重绘，不需要重建绑定。
+/// </summary>
+internal static class ThemeBrush
+{
+	private static readonly List<(WeakReference<SolidColorBrush> Brush, string Key)> Tracked = new();
+
+	public static Brush Get(string key)
+	{
+		var brush = new SolidColorBrush(Resolve(key));
+		Tracked.Add((new WeakReference<SolidColorBrush>(brush), key));
+		if (Tracked.Count > 256) Prune();
+		return brush;
+	}
+
+	private static Color Resolve(string key)
+		=> Application.Current?.TryFindResource(key) is SolidColorBrush b ? b.Color : Colors.Transparent;
+
+	/// <summary>主题切换后调用：把登记过的画刷颜色同步到新调色板（已回收的条目顺带清理）。</summary>
+	public static void RefreshAll()
+	{
+		for (int i = 0; i < Tracked.Count; i++)
+		{
+			if (!Tracked[i].Brush.TryGetTarget(out var brush)) continue;
+			var color = Resolve(Tracked[i].Key);
+			if (brush.Color != color) brush.Color = color;
+		}
+		Prune();
+	}
+
+	private static void Prune()
+	{
+		for (int i = Tracked.Count - 1; i >= 0; i--)
+			if (!Tracked[i].Brush.TryGetTarget(out _)) Tracked.RemoveAt(i);
+	}
+}
+
+/// <summary>
+/// 问题徽标底色。按「能否自动挽救」分三档着色，而不是原先的「冲突=警告色、其余一律危险色」：
+/// 可自动编号解决的冲突为提示蓝，可截断 / 调整参数挽救的为注意黄，必须由用户动手改名的为危险红。
+/// </summary>
 public sealed class IssueBrushConverter : IValueConverter
 {
 	public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -33,8 +78,12 @@ public sealed class IssueBrushConverter : IValueConverter
 		return issue switch
 		{
 			PreviewIssue.None => Brushes.Transparent,
-			PreviewIssue.Conflict => (Brush)Application.Current.FindResource("WarningSoftBrush"),
-			_ => (Brush)Application.Current.FindResource("DangerSoftBrush"),
+			// 仅重名：勾选自动编号即可继续，属提示
+			PreviewIssue.Conflict => ThemeBrush.Get("InfoSoftBrush"),
+			// 超长可截断、序号越界可调参数，属需要处理但能挽救
+			PreviewIssue.TooLong or PreviewIssue.SequenceOverflow => ThemeBrush.Get("WarningSoftBrush"),
+			// 空名与非法字符（含保留名）必须由用户改名
+			_ => ThemeBrush.Get("DangerSoftBrush"),
 		};
 	}
 
@@ -50,8 +99,11 @@ public sealed class IssueTextBrushConverter : IValueConverter
 		var issue = value is PreviewIssue i ? i : PreviewIssue.None;
 		return issue switch
 		{
-			PreviewIssue.Conflict => (Brush)Application.Current.FindResource("WarningBrush"),
-			_ => (Brush)Application.Current.FindResource("DangerBrush"),
+			// 无问题时徽标已折叠，这里给中性色兜底，避免落到危险红
+			PreviewIssue.None => ThemeBrush.Get("MutedTextBrush"),
+			PreviewIssue.Conflict => ThemeBrush.Get("InfoBrush"),
+			PreviewIssue.TooLong or PreviewIssue.SequenceOverflow => ThemeBrush.Get("WarningBrush"),
+			_ => ThemeBrush.Get("DangerBrush"),
 		};
 	}
 
@@ -66,9 +118,9 @@ public sealed class StatusBrushConverter : IValueConverter
 		string s = value as string ?? "";
 		return s switch
 		{
-			"success" => (Brush)Application.Current.FindResource("SuccessBrush"),
-			"failed" => (Brush)Application.Current.FindResource("DangerBrush"),
-			_ => (Brush)Application.Current.FindResource("MutedTextBrush"),
+			"success" => ThemeBrush.Get("SuccessBrush"),
+			"failed" => ThemeBrush.Get("DangerBrush"),
+			_ => ThemeBrush.Get("MutedTextBrush"),
 		};
 	}
 
@@ -151,6 +203,8 @@ public sealed class ScrollThumbVisibilityConverter : IValueConverter
 /// 布局要走过几个中间态，比例便连跳两三次，滑块长度就一截一截地闪。
 /// 这里在滑块长度变化时，用动画让模板里的可视条追向新长度：终值仍是布局算出的真实值，
 /// 过程却是连续的。纯视觉过渡，不参与滚动计算，也不改变命中区域。
+/// E5：动画只作用在渲染层的纵向缩放上，不再逐帧改写可视条的 Height——Height 是布局属性，
+/// 改它会触发测量 / 排列；缩放不触布局，长短变化却同样连续（与进度条的补间同一套做法）。
 /// </summary>
 public static class SmoothScrollThumb
 {
@@ -171,26 +225,193 @@ public static class SmoothScrollThumb
 	private static void OnThumbSizeChanged(object sender, SizeChangedEventArgs e)
 	{
 		if (!e.HeightChanged || sender is not Thumb thumb) return;
-		// 只平滑纵向滚动条：横向滑块的“长度”是宽度，套用同一套高度动画会把它压成一小块
+		// 只平滑纵向滚动条：横向滑块的“长度”是宽度，套用同一套高度逻辑会把它压成一小块
 		if (thumb.TemplatedParent is not ScrollBar { Orientation: Orientation.Vertical }) return;
 		// 滑块本身是模板里那个具名 Border（Thumb 模板根是 Canvas，中间还夹着一层定位用 Grid，
 		// 所以不能再用「第一个子元素」去取）
 		if (thumb.ActualHeight < 0.5) return;
 		if (thumb.Template?.FindName("Th", thumb) is not FrameworkElement bar) return;
+		if (bar.RenderTransform is not ScaleTransform scale) return;   // 缩放层由模板提供
+		scale = EnsureAnimatable(bar, scale);
 
-		// 首次上屏时可视条还没被赋过长度：直接落位，避免滑块从 0 长出来
-		if (double.IsNaN(bar.Height))
+		double height = thumb.ActualHeight;
+		// 上一次的长度变化可能还在动画中：以「当前实际渲染出来的长度」为起点，连续两次变化也能接得上。
+		// 没有显式长度说明还没上过屏，此时不留起点，直接落位，避免滑块从 0 长出来。
+		double rendered = double.IsNaN(bar.Height) ? double.NaN : bar.ActualHeight * scale.ScaleY;
+
+		bar.Height = height;                                          // 布局值永远是权威长度
+		scale.BeginAnimation(ScaleTransform.ScaleYProperty, null);    // 清掉在飞的动画，好取基准
+
+		if (double.IsNaN(rendered) || Math.Abs(height - rendered) < 0.5)
 		{
-			bar.Height = thumb.ActualHeight;
+			scale.ScaleY = 1;
 			return;
 		}
 
-		// 不给 From：动画自动从当前长度（含正在进行的动画的当前值）出发，连续两次变化也能接得上
-		bar.BeginAnimation(FrameworkElement.HeightProperty,
-			new DoubleAnimation(thumb.ActualHeight, TimeSpan.FromMilliseconds(DurationMs))
+		scale.ScaleY = 1;
+		scale.BeginAnimation(ScaleTransform.ScaleYProperty,
+			new DoubleAnimation(rendered / height, 1, TimeSpan.FromMilliseconds(DurationMs))
 			{
 				EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
 			});
+	}
+
+	/// <summary>
+	/// 取可做动画的缩放层。滚动条模板定义在 ResourceDictionary 里，模板被 sealed 时其中的 Freezable
+	/// 会被一并冻结——这层缩放没有被任何 Storyboard 按名引用，WPF 不会替它保留可写性，
+	/// 对冻结对象调 BeginAnimation 会抛「对象已密封或已冻结」（E5 改缩放动画后暴露）。
+	/// 冻结时换成可修改的副本并写回元素，此后动画都作用在这份副本上。
+	/// </summary>
+	private static ScaleTransform EnsureAnimatable(FrameworkElement host, ScaleTransform scale)
+	{
+		if (!scale.IsFrozen) return scale;
+		var mutable = scale.Clone();
+		host.RenderTransform = mutable;
+		return mutable;
+	}
+}
+
+/// <summary>
+/// 让进度条填充段（PART_Indicator）的长度变化连续过渡，而不是一格一格地跳。
+/// 填充段的像素宽度是 ProgressBar 自己按 值/总量 算好后直接写进 Width 的，
+/// 所以不能对 Width 做动画——动画值会盖住布局随后写入的值，进度就再也不动了；
+/// 这里改成在填充段上挂一层缩放：新宽度照旧由布局写入，动画只负责把「上一帧的宽度」
+/// 用 scale = 旧宽/新宽 补回来，再连续追到 1。渲染上是连续生长，且完全不触碰布局。
+/// </summary>
+public static class SmoothProgress
+{
+	private const double DurationMs = 220;
+
+	public static readonly DependencyProperty EnabledProperty = DependencyProperty.RegisterAttached(
+		"Enabled", typeof(bool), typeof(SmoothProgress), new PropertyMetadata(false, OnEnabledChanged));
+
+	/// <summary>上一次的填充宽度，仅用于换算缩放起点（挂在同一个元素上，随模板实例存活）。</summary>
+	private static readonly DependencyProperty LastWidthProperty = DependencyProperty.RegisterAttached(
+		"LastWidth", typeof(double), typeof(SmoothProgress), new PropertyMetadata(double.NaN));
+
+	public static void SetEnabled(DependencyObject element, bool value) => element.SetValue(EnabledProperty, value);
+
+	private static void OnEnabledChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+	{
+		if (d is not FrameworkElement indicator) return;
+		indicator.SizeChanged -= OnIndicatorSizeChanged;
+		if (e.NewValue is true) indicator.SizeChanged += OnIndicatorSizeChanged;
+	}
+
+	private static void OnIndicatorSizeChanged(object sender, SizeChangedEventArgs e)
+	{
+		if (!e.WidthChanged || sender is not FrameworkElement indicator) return;
+
+		double width = indicator.ActualWidth;
+		double previous = (double)indicator.GetValue(LastWidthProperty);
+		indicator.SetValue(LastWidthProperty, width);
+
+		// 首次上屏：布局给的就是真实长度，直接落位，避免进度条从 0 长出来
+		if (double.IsNaN(previous) || Math.Abs(width - previous) < 0.5) return;
+
+		if (indicator.RenderTransform is not ScaleTransform scale) return;
+		scale = EnsureAnimatable(indicator, scale);
+		scale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+		if (width <= 0.5)
+		{
+			// 归零时没有可缩放的基准（旧宽/新宽 会发散），直接贴合
+			scale.ScaleX = 1;
+			return;
+		}
+
+		scale.ScaleX = 1;
+		scale.BeginAnimation(ScaleTransform.ScaleXProperty,
+			new DoubleAnimation(previous / width, 1, TimeSpan.FromMilliseconds(DurationMs))
+			{
+				EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+			});
+	}
+
+	/// <summary>
+	/// 取可做动画的缩放层。进度条模板同样定义在 ResourceDictionary 里，模板 sealed 时
+	/// 内联的 Freezable 会被冻结，对冻结对象调 BeginAnimation 会抛「对象已密封或已冻结」。
+	/// 冻结时换成可修改的副本并写回元素。
+	/// </summary>
+	private static ScaleTransform EnsureAnimatable(FrameworkElement host, ScaleTransform scale)
+	{
+		if (!scale.IsFrozen) return scale;
+		var mutable = scale.Clone();
+		host.RenderTransform = mutable;
+		return mutable;
+	}
+}
+
+/// <summary>
+/// 输入出错时让目标元素横向抖一下（E4）。
+/// 只在「本来没提示 → 现在有提示」的那一刻抖：一直开着提示时继续编辑不会再晃，
+/// 否则敲出半截正则（每键都变错误信息）会变成连续抖动，反而干扰输入。
+/// 走 RenderTransform 平移，不触碰布局，抖动过程不影响周围元素的位置。
+/// </summary>
+public static class Shake
+{
+	private const double DurationMs = 400;
+
+	/// <summary>绑定要监视的提示文本（非空字符串 = 有问题），或布尔值。</summary>
+	public static readonly DependencyProperty OnProperty = DependencyProperty.RegisterAttached(
+		"On", typeof(object), typeof(Shake), new PropertyMetadata(null, OnChanged));
+
+	public static void SetOn(DependencyObject element, object? value) => element.SetValue(OnProperty, value);
+
+	/// <summary>上一次是否已处于「有问题」状态。</summary>
+	private static readonly DependencyProperty WasAlertProperty = DependencyProperty.RegisterAttached(
+		"WasAlert", typeof(bool), typeof(Shake), new PropertyMetadata(false));
+
+	/// <summary>抖动用的平移层，与元素自身的 RenderTransform 并存。</summary>
+	private static readonly DependencyProperty OffsetProperty = DependencyProperty.RegisterAttached(
+		"Offset", typeof(TranslateTransform), typeof(Shake), new PropertyMetadata(null));
+
+	private static void OnChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+	{
+		if (d is not FrameworkElement target) return;
+
+		bool alert = e.NewValue switch
+		{
+			null => false,
+			string s => s.Length > 0,
+			bool b => b,
+			_ => true,
+		};
+
+		bool was = (bool)target.GetValue(WasAlertProperty);
+		target.SetValue(WasAlertProperty, alert);
+		if (alert && !was) Play(target);
+	}
+
+	private static void Play(FrameworkElement target)
+	{
+		TranslateTransform offset = GetOffset(target);
+		offset.BeginAnimation(TranslateTransform.XProperty, null);
+		offset.X = 0;
+
+		// 左右各一次、幅度递减：像撞了一下停住，而不是来回晃
+		double[] steps = [0, -7, 6, -5, 4, -2, 1, 0];
+		var animation = new DoubleAnimationUsingKeyFrames { Duration = TimeSpan.FromMilliseconds(DurationMs) };
+		for (int i = 0; i < steps.Length; i++)
+		{
+			animation.KeyFrames.Add(new LinearDoubleKeyFrame(
+				steps[i], KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(DurationMs * i / (steps.Length - 1)))));
+		}
+		offset.BeginAnimation(TranslateTransform.XProperty, animation);
+	}
+
+	/// <summary>取（必要时建）抖动平移层：包一层 TransformGroup，保留元素原有的变换。</summary>
+	private static TranslateTransform GetOffset(FrameworkElement target)
+	{
+		if (target.GetValue(OffsetProperty) is TranslateTransform existing) return existing;
+
+		var offset = new TranslateTransform();
+		var group = new TransformGroup();
+		if (target.RenderTransform is { } current && !ReferenceEquals(current, Transform.Identity))
+			group.Children.Add(current);
+		group.Children.Add(offset);
+		target.RenderTransform = group;
+		target.SetValue(OffsetProperty, offset);
+		return offset;
 	}
 }
 

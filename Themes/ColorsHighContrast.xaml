@@ -1,0 +1,49 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- ==================================================================
+         高对比度调色板：仅当系统「辅助功能 → 对比度主题」开启时由
+         App.ApplyTheme() 选用（SystemParameters.HighContrast == true）。
+
+         这里不写死任何颜色，全部映射到 SystemColors.* 的系统配色键：
+         系统切换对比度主题时会同步刷新这些值，因此本程序无需自己维护配色。
+         柔和色（*SoftBrush）在高对比度下没有对应概念，统一退化为窗口底色，
+         信息区分改由文本与边框承担——这正是高对比度模式的预期行为。
+         阴影在对比度主题下必须去掉，否则会削弱文字与边框的对比。
+         ================================================================== -->
+
+    <!-- 底色 / 表面 -->
+    <SolidColorBrush x:Key="WindowBrush" Color="{DynamicResource {x:Static SystemColors.WindowColorKey}}" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{DynamicResource {x:Static SystemColors.WindowColorKey}}" />
+    <SolidColorBrush x:Key="CardBrush" Color="{DynamicResource {x:Static SystemColors.WindowColorKey}}" />
+    <SolidColorBrush x:Key="InputBrush" Color="{DynamicResource {x:Static SystemColors.WindowColorKey}}" />
+    <SolidColorBrush x:Key="SurfaceAltBrush" Color="{DynamicResource {x:Static SystemColors.ControlColorKey}}" />
+    <SolidColorBrush x:Key="SurfaceHoverBrush" Color="{DynamicResource {x:Static SystemColors.HighlightColorKey}}" />
+
+    <!-- 边框：高对比度下边框必须与文字同色，否则分隔线会「看不见」 -->
+    <SolidColorBrush x:Key="BorderBrush" Color="{DynamicResource {x:Static SystemColors.WindowTextColorKey}}" />
+    <SolidColorBrush x:Key="BorderStrongBrush" Color="{DynamicResource {x:Static SystemColors.WindowTextColorKey}}" />
+
+    <!-- 文字 -->
+    <SolidColorBrush x:Key="TextBrush" Color="{DynamicResource {x:Static SystemColors.WindowTextColorKey}}" />
+    <SolidColorBrush x:Key="MutedTextBrush" Color="{DynamicResource {x:Static SystemColors.WindowTextColorKey}}" />
+    <SolidColorBrush x:Key="FaintTextBrush" Color="{DynamicResource {x:Static SystemColors.GrayTextColorKey}}" />
+
+    <!-- 强调色：用系统选中色，保证与系统其它程序一致 -->
+    <SolidColorBrush x:Key="AccentBrush" Color="{DynamicResource {x:Static SystemColors.HighlightColorKey}}" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="{DynamicResource {x:Static SystemColors.HotTrackColorKey}}" />
+    <SolidColorBrush x:Key="AccentSoftBrush" Color="{DynamicResource {x:Static SystemColors.WindowColorKey}}" />
+
+    <!-- 语义色：高对比度主题通常只提供少数几种颜色，
+         故一律用前景色表达——可读性优先于颜色区分，区分交给文本与图标。 -->
+    <SolidColorBrush x:Key="SuccessBrush" Color="{DynamicResource {x:Static SystemColors.WindowTextColorKey}}" />
+    <SolidColorBrush x:Key="SuccessSoftBrush" Color="{DynamicResource {x:Static SystemColors.WindowColorKey}}" />
+    <SolidColorBrush x:Key="DangerBrush" Color="{DynamicResource {x:Static SystemColors.WindowTextColorKey}}" />
+    <SolidColorBrush x:Key="DangerSoftBrush" Color="{DynamicResource {x:Static SystemColors.WindowColorKey}}" />
+    <SolidColorBrush x:Key="WarningBrush" Color="{DynamicResource {x:Static SystemColors.WindowTextColorKey}}" />
+    <SolidColorBrush x:Key="WarningSoftBrush" Color="{DynamicResource {x:Static SystemColors.WindowColorKey}}" />
+    <SolidColorBrush x:Key="InfoBrush" Color="{DynamicResource {x:Static SystemColors.WindowTextColorKey}}" />
+    <SolidColorBrush x:Key="InfoSoftBrush" Color="{DynamicResource {x:Static SystemColors.WindowColorKey}}" />
+
+    <!-- 浮层投影：高对比度下取消，避免投影降低文字对比 -->
+    <DropShadowEffect x:Key="ShadowEffect" BlurRadius="0" ShadowDepth="0" Direction="270" Opacity="0" Color="#000000" />
+</ResourceDictionary>

@@ -89,8 +89,19 @@ public partial class AppDialog : ToolWindow
 		if (extra is not null) ExtraHost.Content = extra;
 		Button focus = AddButtons(buttons);
 		Loaded += (_, _) => focus.Focus();
-		return ShowDialog() == true ? _result : -1;
+
+		// E3：提示框不走主窗口的 OpenDialog，这里自己压暗被遮挡的主窗（按深度计数，可嵌套）
+		MainWindow? scrim = ScrimTarget();
+		scrim?.PushModalScrim();
+		try { return ShowDialog() == true ? _result : -1; }
+		finally { scrim?.PopModalScrim(); }
 	}
+
+	/// <summary>本提示框该压暗哪一扇窗口：优先自己的所有者，其次当前活动窗口，最后落到主窗口。</summary>
+	private MainWindow? ScrimTarget()
+		=> Owner as MainWindow
+			?? Application.Current?.Windows.OfType<MainWindow>().FirstOrDefault(w => w.IsActive)
+			?? Application.Current?.MainWindow as MainWindow;
 
 	// ─────────────── 静态入口 ───────────────
 

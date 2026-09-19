@@ -21,5 +21,9 @@
     <SolidColorBrush x:Key="DangerSoftBrush" Color="#F7E2DF" />
     <SolidColorBrush x:Key="WarningBrush" Color="#B07B1C" />
     <SolidColorBrush x:Key="WarningSoftBrush" Color="#F5ECD6" />
-    <SolidColorBrush x:Key="ShadowBrush" Color="#1C000000" />
+    <!-- 提示色（蓝）：用于「可自动挽救」的信息型标记，例如仅重名的冲突徽标 -->
+    <SolidColorBrush x:Key="InfoBrush" Color="#2C6BA8" />
+    <SolidColorBrush x:Key="InfoSoftBrush" Color="#E2ECF7" />
+    <!-- 浮层投影：Toast 卡片等使用。放在调色板里随主题切换，避免投影色写死为纯黑 -->
+    <DropShadowEffect x:Key="ShadowEffect" BlurRadius="24" ShadowDepth="4" Direction="270" Opacity="0.32" Color="#000000" />
 </ResourceDictionary>

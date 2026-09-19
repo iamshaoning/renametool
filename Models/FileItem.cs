@@ -117,14 +117,22 @@ public sealed class FileItem : ObservableObject, INameExpandable
 	public long Size
 	{
 		get => _size;
-		private set => SetProperty(ref _size, value);
+		private set
+		{
+			// SizeText 由 Size 派生：不通知的话，刷新 / 改名后列表里的大小文字会停在旧值
+			if (SetProperty(ref _size, value)) RaisePropertyChanged(nameof(SizeText));
+		}
 	}
 
 	private DateTime _modified;
 	public DateTime Modified
 	{
 		get => _modified;
-		private set => SetProperty(ref _modified, value);
+		private set
+		{
+			// ModifiedText 由 Modified 派生，同上
+			if (SetProperty(ref _modified, value)) RaisePropertyChanged(nameof(ModifiedText));
+		}
 	}
 
 	private DateTime _created;

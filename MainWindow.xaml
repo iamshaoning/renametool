@@ -8,6 +8,7 @@
         Width="1384" Height="860" MinWidth="1384" MinHeight="860"
         WindowStyle="None" ResizeMode="CanResize"
         AllowDrop="True" DragOver="Window_DragOver" DragLeave="Window_DragLeave" Drop="Window_Drop"
+        PreviewKeyDown="MainWindow_PreviewKeyDown"
         WindowStartupLocation="CenterScreen"
         FontFamily="Microsoft YaHei UI, Microsoft YaHei"
         UseLayoutRounding="True"
@@ -623,7 +624,7 @@
                                 </Trigger.ExitActions>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="Root" Property="Opacity" Value="0.45" />
+                                <Setter TargetName="Root" Property="Opacity" Value="{StaticResource DisabledOpacity}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -702,7 +703,7 @@
                                 <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="Bd" Property="Opacity" Value="0.5" />
+                                <Setter TargetName="Bd" Property="Opacity" Value="{StaticResource DisabledOpacity}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -938,7 +939,7 @@
                             <Style.Triggers>
                                 <!-- 未勾选（不参与改名）的文件：仅行内容置灰，文件夹名行保持正常 -->
                                 <DataTrigger Binding="{Binding IsInScope}" Value="False">
-                                    <Setter Property="Opacity" Value="0.45" />
+                                    <Setter Property="Opacity" Value="{StaticResource DisabledOpacity}" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
@@ -1002,9 +1003,19 @@
                         </TextBlock.Style>
                     </TextBlock>
 
-                    <Border Grid.Column="3" Style="{StaticResource IssueBadge}"
-                            Margin="8,0,0,0" Background="{Binding Issue, Converter={StaticResource IssueBrush}}"
+                    <!-- 问题徽标：无问题时整体折叠（否则会留一个空文本的透明底占位，白白吃 12px 宽度） -->
+                    <Border Grid.Column="3" Margin="8,0,0,0"
+                            Background="{Binding Issue, Converter={StaticResource IssueBrush}}"
                             ToolTip="{Binding IssueText}">
+                        <Border.Style>
+                            <Style TargetType="Border" BasedOn="{StaticResource IssueBadge}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Issue}" Value="{x:Static m:PreviewIssue.None}">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
                         <TextBlock Text="{Binding IssueText}" FontSize="{StaticResource FontSizeCaption}" FontWeight="SemiBold"
                                    Foreground="{Binding Issue, Converter={StaticResource IssueTextBrush}}" />
                     </Border>
@@ -1296,9 +1307,11 @@
                          ToolTip="默认按字面查找；开启“使用变量”后按正则表达式匹配" />
 
                 <!-- A5：正则实时校验——语法非法时立刻红字提示，避免执行时静默跳过 -->
+                <!-- E4：提示首次出现时整行抖一下，视线在别的输入框也能察觉 -->
                 <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,4,0,0" TextWrapping="Wrap"
                            Foreground="{DynamicResource DangerBrush}"
                            Text="{Binding Config.RegexError}"
+                           local:Shake.On="{Binding Config.RegexError}"
                            Visibility="{Binding Config.RegexError, Converter={StaticResource NotEmptyVis}}" />
 
                 <TextBlock Grid.Row="3" Grid.Column="0" Text="替换为" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" />
@@ -1708,7 +1721,7 @@
                         <!-- 未启用：整体灰化 -->
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding Enabled}" Value="False">
-                                <Setter Property="Opacity" Value="0.45" />
+                                <Setter Property="Opacity" Value="{StaticResource DisabledOpacity}" />
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
@@ -1804,6 +1817,15 @@
                             </Style>
                         </ContentControl.Style>
                     </ContentControl>
+
+                    <!-- F4 + E4：规则参数的即时提示（明文含非法字符、序号步长为 0）。
+                         原先这类问题只在底部预览行汇总，用户知道「某行有问题」却不知道该改哪个输入框；
+                         这里紧贴编辑区给出原因，并在提示首次出现时抖一下。 -->
+                    <TextBlock Margin="0,8,0,0" TextWrapping="Wrap"
+                               Foreground="{DynamicResource DangerBrush}"
+                               Text="{Binding Config.InputWarning}"
+                               local:Shake.On="{Binding Config.InputWarning}"
+                               Visibility="{Binding Config.InputWarning, Converter={StaticResource NotEmptyVis}}" />
                 </StackPanel>
             </Border>
         </DataTemplate>
@@ -2008,7 +2030,8 @@
                                     <TextBox x:Name="FilterBox" Grid.Column="1" Padding="0,0,6,0" MinHeight="0"
                                              BorderThickness="0" Background="Transparent"
                                              Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
-                                             ToolTip="根据内容筛选，仅筛选结果参与改名（Ctrl+F 定位到此）" />
+                                             KeyDown="FilterBox_KeyDown"
+                                             ToolTip="根据内容筛选，仅筛选结果参与改名（Ctrl+F 定位到此；回车回到列表，Esc 清空）" />
                                 </Grid>
                             </Border>
                         </Grid>
@@ -2029,15 +2052,19 @@
                         <ListBox x:Name="FileListBox"
                                  ItemsSource="{Binding RootFolders}"
                                  Background="Transparent" BorderThickness="0"
-                                 Focusable="False" IsTabStop="False"
+                                 Focusable="True" IsTabStop="True"
+                                 FocusVisualStyle="{x:Null}"
+                                 PreviewKeyDown="FileList_PreviewKeyDown"
                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                  ScrollViewer.VerticalScrollBarVisibility="Visible"
                                  ScrollViewer.CanContentScroll="True"
                                  VirtualizingPanel.IsVirtualizing="True"
                                  VirtualizingPanel.ScrollUnit="Pixel">
                             <ListBox.ItemContainerStyle>
-                                <!-- 勾选由行内复选框承担；第11项已取消文件列表的键盘导航 -->
+                                <!-- 勾选由行内复选框承担。容器自身不取焦点（否则点击一行会给整个文件夹块套上焦点框），
+                                     键盘导航交由 FileListBox 的 PreviewKeyDown 统一处理，焦点落在当前行的复选框上。 -->
                                 <Style TargetType="ListBoxItem">
+                                    <Setter Property="Focusable" Value="False" />
                                     <Setter Property="Padding" Value="2,0" />
                                     <Setter Property="Template">
                                         <Setter.Value>
@@ -2392,13 +2419,14 @@
                          ClipToBounds 的元素上，阴影会被矩形剪裁成带直角的黑色方块。 -->
                     <Grid x:Name="ToastCard" Width="420" Margin="0,0,0,12"
                           RenderTransformOrigin="0.5,0.5" Loaded="ToastCard_Loaded">
+                        <!-- 投影取自主题令牌（Colors*.xaml 的 ShadowEffect）：深色主题下加深、
+                             高对比度主题下直接关闭投影，不再各处硬编码同一组参数。 -->
                         <Grid.Effect>
-                            <DropShadowEffect BlurRadius="24" ShadowDepth="4" Direction="270"
-                                              Opacity="0.32" Color="#000000" />
+                            <StaticResource ResourceKey="ShadowEffect" />
                         </Grid.Effect>
                         <!-- 底色统一使用常规背景色，只有左侧竖条与图标圆底随通知类型着色 -->
                         <Border x:Name="ToastSurface" CornerRadius="{StaticResource Radius2Xl}" Padding="18,16"
-                                Cursor="Hand" ToolTip="点击关闭"
+                                Cursor="Hand" ToolTip="点击关闭（按 Esc 可关闭全部通知）"
                                 Background="{DynamicResource SurfaceBrush}"
                                 BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                             <Border.InputBindings>
@@ -2502,6 +2530,14 @@
         <!-- ══════════════ 拖拽浮层 ══════════════ -->
         <!-- 拖拽时在此显示被拖元素的“投影”，确保浮于文件列表 / 规则区 / 预览区等所有区域之上 -->
         <Canvas x:Name="DragLayer" Grid.RowSpan="3" Panel.ZIndex="10000" IsHitTestVisible="False" />
+
+        <!-- ══════════════ 模态遮罩层（E3） ══════════════ -->
+        <!-- 模态窗口（提示框 / 预设 / 历史 / 关于）打开时把主窗内容压暗一层，
+             让「此刻只能操作弹窗」一眼可见。层常驻、只动 Opacity：
+             与主题波纹同理，切 Visibility 会触发整窗重新布局，那一帧正好与弹窗首帧叠在一起。
+             透明度由代码淡入淡出（见 PushModalScrim / PopModalScrim）。 -->
+        <Border x:Name="ModalScrim" Grid.RowSpan="3" Panel.ZIndex="9998"
+                Background="#000000" Opacity="0" IsHitTestVisible="False" />
 
         <!-- ══════════════ 主题切换波纹层 ══════════════ -->
         <!-- 换色时以外观滑块中心为圆心向外扩散一个“圆形揭示区”：

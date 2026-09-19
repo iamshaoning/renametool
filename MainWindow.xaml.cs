@@ -83,7 +83,53 @@ public partial class MainWindow : ToolWindow
 			// 日志是执行过程中逐条追加的，让每条新日志淡入，而不是硬生生地跳出来
 			vm.Logs.CollectionChanged += OnLogsChanged;
 			vm.Previews.CollectionChanged += OnPreviewsChanged;
+			// 文件列表每次刷新都是「清空 + 重建」，重建后把滚动位置放回原处（导入 / 刷新 / 改名不该打断浏览）
+			vm.RootFolders.CollectionChanged += OnRootFoldersChanged;
+			vm.PropertyChanged += OnVmPropertyChanged;
 		}
+	}
+
+	private void OnVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+	{
+		// 筛选会整体换掉可见集合，此时回到顶部才是预期行为；其余刷新保持原位置
+		if (e.PropertyName == nameof(MainViewModel.FilterText)) _resetFileListScroll = true;
+	}
+
+	// ─────────────── 文件列表滚动位置（C7） ───────────────
+
+	/// <summary>下一次列表重建是否回到顶部。仅筛选置位，其余刷新沿用当下位置。</summary>
+	private bool _resetFileListScroll;
+
+	/// <summary>
+	/// 文件列表的层级树被整体重建（根集合 Reset）时，把重建前的滚动位置记下来，等布局完成后再放回去。
+	/// 清空集合本身会先把内容高度压掉，随后布局会把 VerticalOffset 归零；
+	/// 因此必须在 Reset 事件的当下取值——此时还没走到布局，VerticalOffset 仍是重建前的位置。
+	/// </summary>
+	private void OnRootFoldersChanged(object? sender, NotifyCollectionChangedEventArgs e)
+	{
+		if (e.Action != NotifyCollectionChangedAction.Reset) return;
+		if (FindScrollViewer(FileListBox) is not { } scroll) return;
+
+		double offset = _resetFileListScroll ? 0 : scroll.VerticalOffset;
+		_resetFileListScroll = false;
+		Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
+		{
+			if (FindScrollViewer(FileListBox) is not { } target) return;
+			if (offset <= 0) target.ScrollToTop();
+			else target.ScrollToVerticalOffset(offset);
+		}));
+	}
+
+	/// <summary>取控件内部承载滚动的 ScrollViewer（列表模板未命名它，只能沿可视树找）。</summary>
+	private static ScrollViewer? FindScrollViewer(DependencyObject root)
+	{
+		for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+		{
+			DependencyObject child = VisualTreeHelper.GetChild(root, i);
+			if (child is ScrollViewer viewer) return viewer;
+			if (FindScrollViewer(child) is { } found) return found;
+		}
+		return null;
 	}
 
 	/// <summary>日志新增时让该行淡入（批量清空不逐行动画）。</summary>
@@ -261,6 +307,9 @@ public partial class MainWindow : ToolWindow
 	/// <summary>关闭前记录窗口尺寸与位置（第14项：只记忆窗口状态，不记忆导入内容与规则）。</summary>
 	private void Window_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
 	{
+		// 超大目录的递归扫描可能还要跑很久，关窗即取消，否则进程会拖到扫描结束才退出。
+		Vm?.CancelPendingScan();
+
 		var s = SettingsStore.Current;
 		if (WindowState == WindowState.Normal)
 		{
@@ -439,6 +488,13 @@ public partial class MainWindow : ToolWindow
 		if (ThemeSlider.Template?.FindName("PART_Track", ThemeSlider) is not Track track) return;
 		if (track.Thumb is not { } thumb) return;
 		if (thumb.RenderTransform is not TranslateTransform slide) return;
+		// 位移层写在 ControlTemplate 里，模板被 seal 时其中的 Freezable 可能被一并冻结，
+		// 对冻结对象调 BeginAnimation 会抛「对象已密封或已冻结」。冻结时换成可修改的副本再动画。
+		if (slide.IsFrozen)
+		{
+			slide = slide.Clone();
+			thumb.RenderTransform = slide;
+		}
 
 		// 先把“拇指此刻实际偏移轨道多少”读出来（有动画时拿到的是动画当前值），
 		// 它就是拇指落后 / 超前轨道的量，下面要把它并进新起点。
@@ -670,6 +726,125 @@ public partial class MainWindow : ToolWindow
 		FilterBox.SelectAll();
 	}
 
+	// ─────────────── 键盘操作：筛选框 / 文件列表 / Esc（C3、A14、C5） ───────────────
+
+	/// <summary>键盘光标当前所在的文件行；列表重建后按对象引用重新定位，找不到则从首行重新开始。</summary>
+	private FileItem? _kbRow;
+
+	/// <summary>主窗口的 Esc：优先清空筛选，其次关闭通知浮层（浮层原本只能用鼠标点掉）。</summary>
+	private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
+	{
+		if (e.Key != Key.Escape || Vm is not { } vm) return;
+
+		// 焦点在筛选框时由 FilterBox_KeyDown 处理（那时还要顺带把焦点交还列表），这里不抢先。
+		if (!FilterBox.IsKeyboardFocusWithin && !string.IsNullOrEmpty(vm.FilterText))
+		{
+			vm.FilterText = "";
+			e.Handled = true;
+			return;
+		}
+		if (vm.Toasts.Count > 0)
+		{
+			vm.DismissAllToasts();
+			e.Handled = true;
+		}
+	}
+
+	/// <summary>筛选框：回车把焦点交还列表（筛选本就随输入实时结算），Esc 清空筛选并回到列表。</summary>
+	private void FilterBox_KeyDown(object sender, KeyEventArgs e)
+	{
+		if (e.Key is not (Key.Enter or Key.Escape)) return;
+		e.Handled = true;
+		if (e.Key == Key.Escape && Vm is { } vm) vm.FilterText = "";
+		FileListBox.Focus();
+	}
+
+	/// <summary>
+	/// 文件列表的键盘导航：容器（ListBoxItem）不取焦点，上下方向键在「当前可见的行」之间移动，空格切换勾选。
+	/// 列表是「文件夹虚拟化 + 行内 ItemsControl」两层结构，行并不是 ListBox 的直接项，
+	/// 因此这里自行维护一个键盘光标，并把焦点落到目标行的复选框上——焦点环即“光标在第几行”的可视提示。
+	/// </summary>
+	private void FileList_PreviewKeyDown(object sender, KeyEventArgs e)
+	{
+		if (e.Key is not (Key.Down or Key.Up or Key.Home or Key.End or Key.Space)) return;
+
+		List<FileItem> rows = CollectVisibleRows();
+		if (rows.Count == 0) return;
+
+		int index = _kbRow is null ? -1 : rows.IndexOf(_kbRow);
+		switch (e.Key)
+		{
+			case Key.Down: index = index < 0 ? 0 : Math.Min(index + 1, rows.Count - 1); break;
+			case Key.Up: index = index < 0 ? rows.Count - 1 : Math.Max(index - 1, 0); break;
+			case Key.Home: index = 0; break;
+			case Key.End: index = rows.Count - 1; break;
+			case Key.Space:
+				if (index < 0) index = 0;
+				FileItem target = rows[index];
+				if (!target.IsMissing) target.Selected = !target.Selected;   // 失效条目不可勾选，与鼠标一致
+				break;
+		}
+
+		if (index < 0) index = 0;
+		e.Handled = true;
+		FocusRow(rows[index]);
+	}
+
+	/// <summary>按当前展开状态收集真正可见的文件行，顺序与界面自上而下一致。</summary>
+	private static List<FileItem> CollectVisibleRows()
+	{
+		List<FileItem> rows = [];
+		if (Vm is not { } vm) return rows;
+		foreach (FolderNode root in vm.RootFolders) Collect(root, rows);
+		return rows;
+
+		static void Collect(FolderNode node, List<FileItem> into)
+		{
+			if (!node.IsExpanded) return;
+			foreach (object row in node.Rows)
+			{
+				if (row is FileItem file) into.Add(file);
+				else if (row is FolderNode sub) Collect(sub, into);
+			}
+		}
+	}
+
+	/// <summary>把键盘光标移到指定行：先确保该行已生成（顶层文件夹可能被虚拟化回收），再滚入视野并聚焦。</summary>
+	private void FocusRow(FileItem item)
+	{
+		_kbRow = item;
+		if (FindRowAnchor(FileListBox, item) is null && Vm is { } vm)
+		{
+			foreach (FolderNode root in vm.RootFolders)
+			{
+				if (!root.AllFiles().Contains(item)) continue;
+				FileListBox.ScrollIntoView(root);
+				FileListBox.UpdateLayout();
+				break;
+			}
+		}
+		if (FindRowAnchor(FileListBox, item) is { } anchor)
+		{
+			anchor.BringIntoView();
+			anchor.Focus();
+		}
+	}
+
+	/// <summary>在可视树中找该行的可聚焦锚点：正常行是勾选框，失效行是行内的删除按钮。</summary>
+	private static FrameworkElement? FindRowAnchor(DependencyObject root, object item)
+	{
+		for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+		{
+			DependencyObject child = VisualTreeHelper.GetChild(root, i);
+			if (child is FrameworkElement { Focusable: true, IsVisible: true } anchor
+				&& anchor is CheckBox or Button
+				&& ReferenceEquals(anchor.DataContext, item))
+				return anchor;
+			if (FindRowAnchor(child, item) is { } found) return found;
+		}
+		return null;
+	}
+
 	/// <summary>标题栏右侧的最小化 / 最大化 / 关闭按钮区域不参与拖动，否则按下按钮会连带把窗口拖走。</summary>
 	protected override bool BlockTitleBarDrag(MouseButtonEventArgs e)
 		=> IsWithinButton(e.OriginalSource as DependencyObject);
@@ -737,7 +912,46 @@ public partial class MainWindow : ToolWindow
 	{
 		dialog.Owner = this;
 		dialog.DataContext = Vm;
-		dialog.ShowDialog();
+		PushModalScrim();
+		try { dialog.ShowDialog(); }
+		finally { PopModalScrim(); }
+	}
+
+	// ─────────────── 模态遮罩（E3） ───────────────
+
+	/// <summary>当前压着遮罩的模态层数。弹窗里再弹提示框时会叠到 2，逐层关掉才恢复。</summary>
+	private int _modalScrimDepth;
+
+	/// <summary>
+	/// 模态窗口打开时压暗主窗内容。<see cref="AppDialog"/> 这类不经 <see cref="OpenDialog"/> 的
+	/// 提示框也会调用它，故按深度计数：只在最外层真正淡入、最后一层真正淡出，
+	/// 避免嵌套弹窗时前一个的关闭把遮罩提前收掉。
+	/// 高对比度模式下不压暗——那里应当保持系统配色与足够对比，叠一层遮罩只会削弱可读性。
+	/// </summary>
+	internal void PushModalScrim()
+	{
+		if (SystemParameters.HighContrast) return;
+		if (++_modalScrimDepth > 1) return;
+		FadeModalScrim(0.32);
+	}
+
+	/// <summary>模态窗口关闭时恢复主窗亮度（与 <see cref="PushModalScrim"/> 配对调用）。</summary>
+	internal void PopModalScrim()
+	{
+		if (SystemParameters.HighContrast || _modalScrimDepth == 0) return;
+		if (--_modalScrimDepth > 0) return;
+		FadeModalScrim(0);
+	}
+
+	/// <summary>遮罩透明度过渡：与全局节奏一致（160ms、CubicEase 缓出）。</summary>
+	private void FadeModalScrim(double to)
+	{
+		ModalScrim.BeginAnimation(OpacityProperty,
+			new DoubleAnimation(to, TimeSpan.FromMilliseconds(160))
+			{
+				EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+				FillBehavior = FillBehavior.HoldEnd,
+			});
 	}
 
 	// ─────────────── 数字输入框：上下箭头调整数值 ───────────────

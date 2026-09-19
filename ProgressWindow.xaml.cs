@@ -59,9 +59,6 @@ public sealed partial class ProgressWindow : ToolWindow
 	/// <summary>取消令牌：交给后台任务用于随时中止。</summary>
 	public CancellationToken Token => _cts.Token;
 
-	/// <summary>用户是否已请求中断。</summary>
-	public bool IsCancelled => _cts.IsCancellationRequested;
-
 	/// <summary>
 	/// 显示窗口（由调用方在界面线程上调用）。之所以不直接用 <see cref="Window.Show"/>，
 	/// 是为了记住“从未显示”这一状态：耗时很短的操作可以直接 <see cref="Finish"/>，

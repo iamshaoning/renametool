@@ -1,4 +1,4 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:local="clr-namespace:RenameTool">
 
@@ -11,6 +11,21 @@
 
     <!-- 滚动条滑块可见性：内容未溢出时收起滑块（配合始终预留的滚动条槽位，避免内容宽度抖动） -->
     <local:ScrollThumbVisibilityConverter x:Key="ScrollThumbVis" />
+
+    <!-- 键盘焦点环：由 App.OnPreviewGotKeyboardFocus 指派给所有未自行声明焦点框的控件，
+         取代系统默认的点状虚线框（虚线在小尺寸图标按钮上几乎不可见）。
+         焦点框由 WPF 画在 Adorner 层，不参与布局，因此不会让元素尺寸抖动。 -->
+    <Style x:Key="FocusRingStyle">
+        <Setter Property="Control.Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <Rectangle Margin="-3" StrokeThickness="1.5"
+                               Stroke="{DynamicResource AccentBrush}"
+                               RadiusX="4" RadiusY="4" SnapsToDevicePixels="True" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 
     <!-- 基础按钮 -->
     <Style TargetType="Button">
@@ -101,7 +116,7 @@
                             </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="Root" Property="Opacity" Value="0.45" />
+                            <Setter TargetName="Root" Property="Opacity" Value="{StaticResource DisabledOpacity}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -184,7 +199,7 @@
                             <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="Bd" Property="Opacity" Value="0.5" />
+                            <Setter TargetName="Bd" Property="Opacity" Value="{StaticResource DisabledOpacity}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -265,23 +280,62 @@
                                           Content="{TemplateBinding SelectionBoxItem}"
                                           ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
                                           IsHitTestVisible="False" />
+                        <!-- E6：下拉开合动效。淡入淡出交给系统 PopupAnimation="Fade"——它的关闭路径
+                             会先播完动画再销毁弹窗窗口（150ms），自建动画挂在 Popup 上会在窗口隐藏后空转。
+                             4px 位移则由内层 Border 的 TranslateTransform 承担（160ms 三次缓出）。
+                             位移必须挂在 Border 上、而不是 Popup 的直接子元素上：Popup 首次创建窗口时
+                             会把直接子元素的 RenderTransform 一并计入定位，使首次展开与选择框之间多出
+                             一条缝隙、之后再展开又消失；故此处用一层 Grid 把位移动画隔在内层。 -->
                         <Popup x:Name="PART_Popup" Placement="Bottom" AllowsTransparency="True"
-                               IsOpen="{TemplateBinding IsDropDownOpen}" Focusable="False" PopupAnimation="Slide">
-                            <Border MinWidth="{TemplateBinding ActualWidth}"
-                                    MaxHeight="{TemplateBinding MaxDropDownHeight}"
-                                    Background="{DynamicResource SurfaceBrush}"
-                                    BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1"
-                                    CornerRadius="{StaticResource RadiusM}" Margin="0,3,0,0">
-                                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                    <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
-                                </ScrollViewer>
-                            </Border>
+                               IsOpen="{TemplateBinding IsDropDownOpen}" Focusable="False" PopupAnimation="Fade">
+                            <Grid>
+                                <Border x:Name="DropRoot" MinWidth="{TemplateBinding ActualWidth}"
+                                        MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                        Background="{DynamicResource SurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1"
+                                        CornerRadius="{StaticResource RadiusM}" Margin="0,3,0,0"
+                                        RenderTransformOrigin="0.5,0">
+                                    <Border.RenderTransform>
+                                        <TranslateTransform x:Name="DropShift" Y="-4" />
+                                    </Border.RenderTransform>
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
+                                    </ScrollViewer>
+                                </Border>
+                            </Grid>
                         </Popup>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <!-- 悬停交给 Toggle 模板内的过渡层；展开是离散状态，直接换底色即可 -->
                         <Trigger Property="IsDropDownOpen" Value="True">
                             <Setter TargetName="Toggle" Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                            <!-- 展开：淡入由内建 Fade 负责，这里只补 4px 下移归位 -->
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="DropShift" Storyboard.TargetProperty="Y"
+                                                         From="-4" To="0" Duration="0:0:0.16">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <!-- 收起：与展开对称地上移 4px。淡出同样由内建 Fade 完成，窗口会在关闭后
+                                 再存活 150ms 供这段位移播完，故时长取 0.14s 留出余量。 -->
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="DropShift" Storyboard.TargetProperty="Y"
+                                                         From="0" To="-4" Duration="0:0:0.14">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="HasItems" Value="False">
                             <Setter TargetName="Toggle" Property="IsEnabled" Value="False" />
@@ -336,7 +390,7 @@
                             </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Opacity" Value="0.5" />
+                            <Setter Property="Opacity" Value="{StaticResource DisabledOpacity}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -363,7 +417,12 @@
                                     BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1"
                                     CornerRadius="{StaticResource RadiusS}">
                                 <!-- 固定 16×16 坐标系，保证对号与横线的几何中心都落在 (8,8)，缩放后垂直居中 -->
-                                <Viewbox Width="11" Height="11" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <!-- E1：勾选瞬间对号由 0.6 缩放淡入（120ms），而不是硬切出现 -->
+                                <Viewbox x:Name="Tick" Width="11" Height="11" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                         RenderTransformOrigin="0.5,0.5">
+                                    <Viewbox.RenderTransform>
+                                        <ScaleTransform ScaleX="1" ScaleY="1" />
+                                    </Viewbox.RenderTransform>
                                     <Grid Width="16" Height="16">
                                         <Path x:Name="Check" Data="M 3.6 8.4 L 6.6 11.3 L 12.4 4.7"
                                               Stretch="None"
@@ -390,12 +449,64 @@
                             <Setter TargetName="Box" Property="Background" Value="{DynamicResource AccentBrush}" />
                             <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
                             <Setter TargetName="Check" Property="Visibility" Value="Visible" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Tick" Storyboard.TargetProperty="Opacity"
+                                                         From="0" To="1" Duration="0:0:0.12">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="Tick"
+                                                         Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                         From="0.6" To="1" Duration="0:0:0.12">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="Tick"
+                                                         Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                         From="0.6" To="1" Duration="0:0:0.12">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
                         </Trigger>
                         <!-- 不确定态（IsChecked 为 null）：显示横线，用于文件夹分组的“部分选中” -->
                         <Trigger Property="IsChecked" Value="{x:Null}">
                             <Setter TargetName="Box" Property="Background" Value="{DynamicResource AccentBrush}" />
                             <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
                             <Setter TargetName="Dash" Property="Visibility" Value="Visible" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Tick" Storyboard.TargetProperty="Opacity"
+                                                         From="0" To="1" Duration="0:0:0.12">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="Tick"
+                                                         Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                         From="0.6" To="1" Duration="0:0:0.12">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="Tick"
+                                                         Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                         From="0.6" To="1" Duration="0:0:0.12">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
                         </Trigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
@@ -428,7 +539,7 @@
                             </MultiTrigger.ExitActions>
                         </MultiTrigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Opacity" Value="0.5" />
+                            <Setter Property="Opacity" Value="{StaticResource DisabledOpacity}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -574,8 +685,16 @@
                     <Border Background="{TemplateBinding Background}" CornerRadius="3" ClipToBounds="True">
                         <Grid>
                             <Rectangle x:Name="PART_Track" />
+                            <!-- E2：宽度照旧由 ProgressBar 写入，SmoothProgress 只在宽度变化时补一次
+                                 「从上一帧长度长到新长度」的缩放动画，进度不再整段跳变。
+                                 缩放原点取左中，向右生长（纵向不受影响）。 -->
                             <Rectangle x:Name="PART_Indicator" HorizontalAlignment="Left"
-                                       Fill="{TemplateBinding Foreground}" RadiusX="3" RadiusY="3" />
+                                       Fill="{TemplateBinding Foreground}" RadiusX="3" RadiusY="3"
+                                       RenderTransformOrigin="0,0.5" local:SmoothProgress.Enabled="True">
+                                <Rectangle.RenderTransform>
+                                    <ScaleTransform ScaleX="1" ScaleY="1" />
+                                </Rectangle.RenderTransform>
+                            </Rectangle>
                         </Grid>
                     </Border>
                 </ControlTemplate>
@@ -611,8 +730,15 @@
                                                          顶对齐才是滚动条滑块该有的「自上而下伸长」 -->
                                                     <Border x:Name="Th" Width="6" Background="{DynamicResource BorderStrongBrush}"
                                                             CornerRadius="3" VerticalAlignment="Top"
+                                                            RenderTransformOrigin="0,0"
                                                             Visibility="{Binding Maximum, RelativeSource={RelativeSource AncestorType=ScrollBar}, Converter={StaticResource ScrollThumbVis}}">
-                                                        <!-- 悬停过渡层放在 Th 内部：长度仍由 SmoothScrollThumb 驱动 Th.Height，
+                                                        <!-- E5：长度变化不再逐帧改写 Height（布局属性，会触发测量/排列），
+                                                             改为对渲染层做纵向缩放：Height 由 SmoothScrollThumb 一次写成权威值，
+                                                             缩放负责把视觉从上一帧长度补到新长度。原点取左上，自上而下伸长。 -->
+                                                        <Border.RenderTransform>
+                                                            <ScaleTransform ScaleX="1" ScaleY="1" />
+                                                        </Border.RenderTransform>
+                                                        <!-- 悬停过渡层放在 Th 内部：长度仍由 SmoothScrollThumb 驱动 Th 的可视长度，
                                                              内层自动跟随，不必再复制一套尺寸绑定 -->
                                                         <Border x:Name="Hover" Background="{DynamicResource FaintTextBrush}"
                                                                 CornerRadius="3" Opacity="0" IsHitTestVisible="False" />
@@ -795,15 +921,43 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ContextMenu">
-                    <Border Background="{TemplateBinding Background}"
+                    <!-- E6：展开动效自己来（160ms 三次缓出淡入 + 4px 上移归位），
+                         不再由系统按「菜单动画」设置播放通用淡入——那套时长与缓动与本程序其余动效不同拍。 -->
+                    <Border x:Name="Root" Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="{StaticResource RadiusM}"
-                            Padding="{TemplateBinding Padding}">
+                            Padding="{TemplateBinding Padding}"
+                            RenderTransformOrigin="0.5,0">
+                        <Border.RenderTransform>
+                            <TranslateTransform x:Name="RootShift" Y="-4" />
+                        </Border.RenderTransform>
                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                             <ItemsPresenter />
                         </ScrollViewer>
                     </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsOpen" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="Opacity"
+                                                         From="0" To="1" Duration="0:0:0.16">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="RootShift" Storyboard.TargetProperty="Y"
+                                                         From="-4" To="0" Duration="0:0:0.16">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -844,14 +998,22 @@
                                       Data="M 0 0 L 4 4 L 0 8" Stretch="None"
                                       Stroke="{DynamicResource MutedTextBrush}" StrokeThickness="1.5"
                                       VerticalAlignment="Center" />
+                                <!-- E6：子菜单开合动效与主下拉同一套：淡入淡出交给内建 Fade，
+                                     4px 位移同样用一层 Grid 隔在 Popup 直接子元素之外（原因见下拉框模板）。 -->
                                 <Popup x:Name="PART_Popup" AllowsTransparency="True" Placement="Right"
                                        IsOpen="{TemplateBinding IsSubmenuOpen}" Focusable="False"
                                        PopupAnimation="Fade">
-                                    <Border Background="{DynamicResource SurfaceBrush}"
-                                            BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1"
-                                            CornerRadius="{StaticResource RadiusM}" Padding="4" Margin="4,0,0,0">
-                                        <ItemsPresenter />
-                                    </Border>
+                                    <Grid>
+                                        <Border x:Name="SubRoot" Background="{DynamicResource SurfaceBrush}"
+                                                BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1"
+                                                CornerRadius="{StaticResource RadiusM}" Padding="4" Margin="4,0,0,0"
+                                                RenderTransformOrigin="0,0.5">
+                                            <Border.RenderTransform>
+                                                <TranslateTransform x:Name="SubShift" X="-4" />
+                                            </Border.RenderTransform>
+                                            <ItemsPresenter />
+                                        </Border>
+                                    </Grid>
                                 </Popup>
                             </Grid>
                         </Border>
@@ -862,6 +1024,34 @@
                         </Trigger>
                         <Trigger Property="Role" Value="SubmenuHeader">
                             <Setter TargetName="Arrow" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <!-- E6：子菜单展开与主菜单同一套节奏（160ms 三次缓出 + 4px 左移归位） -->
+                        <Trigger Property="IsSubmenuOpen" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="SubShift" Storyboard.TargetProperty="X"
+                                                         From="-4" To="0" Duration="0:0:0.16">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <!-- 收起：与展开对称地左移 4px，时长让出内建 Fade 的 150ms 窗口存活期 -->
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="SubShift" Storyboard.TargetProperty="X"
+                                                         From="0" To="-4" Duration="0:0:0.14">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsHighlighted" Value="True">
                             <Trigger.EnterActions>

@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
-  <assemblyIdentity version="1.16.2.0" name="RenameTool.app" />
+  <!-- 本文件是「模板」：version 必须是合法版本号（缺失会被系统判为清单无效，程序直接无法启动），
+       但它不参与任何 SxS 绑定，没必要也不应该单独维护。
+       构建时 GenerateAppManifest 目标会用 RenameTool.csproj 的 <Version> 覆盖下面的占位版本，
+       因此版本号只有 RenameTool.csproj 一处来源。 -->
+  <assemblyIdentity version="__VERSION__.0" name="RenameTool.app" />
   <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
     <security>
       <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">

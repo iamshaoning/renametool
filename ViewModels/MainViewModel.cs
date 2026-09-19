@@ -360,7 +360,7 @@ public sealed class MainViewModel : ObservableObject
 		ExecuteCommand = new RelayCommand(Execute, () => CanExecute);
 		UndoCommand = new RelayCommand(Undo, () => _service.CanUndo && !IsExecuting);
 		RedoCommand = new RelayCommand(Redo, () => _service.CanRedo && !IsExecuting);
-		ClearLogCommand = new RelayCommand(() => Logs.Clear());
+		ClearLogCommand = new RelayCommand(() => Logs.Clear(), () => Logs.Count > 0);
 		AddRuleCommand = new RelayCommand<RuleType>(AddRule);
 		RemoveRuleCommand = new RelayCommand<RenameRule>(r => { if (r is null) return; Rules.Remove(r); RecomputeAll(); });
 		DuplicateRuleCommand = new RelayCommand<RenameRule>(DuplicateRule);
@@ -387,6 +387,7 @@ public sealed class MainViewModel : ObservableObject
 			RaisePropertyChanged(nameof(HasLogs));
 			RaisePropertyChanged(nameof(CanRetryFailed));
 			RetryFailedCommand.RaiseCanExecuteChanged();
+			ClearLogCommand.RaiseCanExecuteChanged();
 		};
 
 		_service.HistoryChanged += () => OnUi(() =>
@@ -844,8 +845,8 @@ public sealed class MainViewModel : ObservableObject
 	/// ③ 支持取消：每扫描到一个文件就检查一次，便于在后台扫描时随时中断。
 	/// 收集到每个文件时都会回调 <c>onFile</c>（用于刷新“已扫描 N 个文件”）。
 	/// </summary>
-	private static void CollectFiles(string root, List<string> results)
-		=> CollectFiles(root, results, 0, default, null);
+	private static void CollectFiles(string root, List<string> results, CancellationToken token)
+		=> CollectFiles(root, results, 0, token, null);
 
 	/// <summary>递归收集的实际实现（带取消与逐文件回调）。</summary>
 	private static void CollectFiles(string root, List<string> results, int depth,
@@ -978,6 +979,12 @@ public sealed class MainViewModel : ObservableObject
 	public void ShowToast(string message, ToastKind kind = ToastKind.Success)
 		=> Toasts.Add(new ToastItem(message, kind, DismissToast));
 
+	/// <summary>关闭全部通知（主窗口按 Esc 时调用；逐条走同一条退场动画）。</summary>
+	public void DismissAllToasts()
+	{
+		foreach (ToastItem item in Toasts.ToList()) DismissToast(item);
+	}
+
 	/// <summary>关闭某条通知：先播退场动画，再移除该条，其余条目自动上移补位。</summary>
 	private void DismissToast(ToastItem item)
 	{
@@ -1057,6 +1064,13 @@ public sealed class MainViewModel : ObservableObject
 		RecomputeAll();
 	}
 
+	/// <summary>当前正在进行的目录重扫。新一轮重扫、开始执行或窗口关闭时都会取消它。</summary>
+	private CancellationTokenSource? _scanCts;
+
+	/// <summary>取消尚未结束的目录重扫（开始执行改名、或窗口关闭时调用）。
+	/// 超大目录的递归枚举可能持续很久，不取消的话关窗后进程还要等它跑完。</summary>
+	public void CancelPendingScan() => _scanCts?.Cancel();
+
 	/// <summary>
 	/// 刷新文件列表：
 	/// 文件夹来源的按根目录重新扫描为最新状态；文件来源的逐个刷新存在状态，不存在则标记失效。
@@ -1073,6 +1087,13 @@ public sealed class MainViewModel : ObservableObject
 			.ToList();
 		if (roots.Count == 0 && folderScanOnly) return;
 
+		// 同一时刻只保留一轮重扫：新一轮开始时，旧的那轮数据已经过时，直接取消。
+		// 每个 CTS 都由自己那一轮的 finally 释放（见下），这里只负责取消。
+		_scanCts?.Cancel();
+		var cts = new CancellationTokenSource();
+		_scanCts = cts;
+		CancellationToken token = cts.Token;
+
 		// 快照：ObservableCollection 不能在后台线程上枚举
 		var snapshot = Files.ToList();
 
@@ -1080,26 +1101,45 @@ public sealed class MainViewModel : ObservableObject
 		var states = new Dictionary<FileItem, FileItem.DiskState>();
 		List<FileItem> newItems = [];
 
-		await Task.Run(() =>
+		try
 		{
-			// 汇总各文件夹根的最新文件集合
-			foreach (string root in roots)
+			await Task.Run(() =>
 			{
-				List<string> paths = [];
-				CollectFiles(root, paths);
-				foreach (string p in paths) latest.TryAdd(p, root);
-			}
+				// 汇总各文件夹根的最新文件集合
+				foreach (string root in roots)
+				{
+					List<string> paths = [];
+					CollectFiles(root, paths, token);
+					token.ThrowIfCancellationRequested();
+					foreach (string p in paths) latest.TryAdd(p, root);
+				}
 
-			var known = new HashSet<string>(snapshot.Select(f => f.FullPath), StringComparer.OrdinalIgnoreCase);
-			foreach (var (path, root) in latest)
-			{
-				if (known.Contains(path)) continue;
-				// 根目录下新出现的文件：构造同样要读盘，一并放在这里
-				newItems.Add(new FileItem(path) { IsFolderSource = true, SourceRoot = root });
-			}
+				var known = new HashSet<string>(snapshot.Select(f => f.FullPath), StringComparer.OrdinalIgnoreCase);
+				foreach (var (path, root) in latest)
+				{
+					token.ThrowIfCancellationRequested();
+					if (known.Contains(path)) continue;
+					// 根目录下新出现的文件：构造同样要读盘，一并放在这里
+					newItems.Add(new FileItem(path) { IsFolderSource = true, SourceRoot = root });
+				}
 
-			foreach (var f in snapshot) states[f] = FileItem.ReadDisk(f.FullPath);
-		});
+				foreach (var f in snapshot)
+				{
+					token.ThrowIfCancellationRequested();
+					states[f] = FileItem.ReadDisk(f.FullPath);
+				}
+			}, token);
+		}
+		catch (OperationCanceledException)
+		{
+			// 本轮重扫已作废（被新一轮重扫 / 执行改名 / 关窗取消）：不触碰界面，交由取消方处理。
+			return;
+		}
+		finally
+		{
+			if (ReferenceEquals(_scanCts, cts)) _scanCts = null;
+			cts.Dispose();
+		}
 
 		_suspend = true;
 		try
@@ -1574,6 +1614,9 @@ public sealed class MainViewModel : ObservableObject
 		}
 
 		IsExecuting = true;
+		// 若上一轮目录重扫还没跑完，它扫到的是「改名之前」的旧状态，继续跑完只会把过时结果
+		// 覆盖到列表上（收尾时还会再刷一次），所以此刻直接取消。
+		CancelPendingScan();
 		Logs.Clear();
 		ProgressTotal = built.Plan.Count;
 		ProgressCurrent = 0;
@@ -1721,9 +1764,16 @@ public sealed class MainViewModel : ObservableObject
 			{
 				ShowToast("已中断执行：没有文件被改名", ToastKind.Warning);
 			}
+			// 停留期间用户可能已发起新一轮执行（IsExecuting 又变 true）。
+			// 此时既不该弹窗（会压在新任务的进度窗上），也不能真去撤销（会把新一轮改名的
+			// 中间状态搅乱），故直接按「保留已完成结果」处理，并明确告知。
+			else if (IsExecuting)
+			{
+				ShowToast($"已中断执行：保留已完成的 {finishedOk} 项改名", ToastKind.Warning);
+			}
 			else if (AppDialog.AskRestoreAfterInterrupt(null, finishedOk, built.Plan.Count))
 			{
-				Undo();
+				await UndoCore();
 			}
 			else
 			{
@@ -1769,6 +1819,13 @@ public sealed class MainViewModel : ObservableObject
 	private async void Undo()
 	{
 		if (IsExecuting) return;
+		await UndoCore();
+	}
+
+	/// <summary>撤销的实际实现，不含「执行中」守卫：中断收尾需要直接复用（见 Execute 的中断分支）。
+	/// 「执行中禁止撤销」的守卫只属于命令入口 <see cref="Undo"/>。</summary>
+	private async Task UndoCore()
+	{
 		var outcomes = _service.Undo();
 		Logs.Clear();
 		foreach (var o in outcomes)
@@ -1794,6 +1851,10 @@ public sealed class MainViewModel : ObservableObject
 				ShowToast($"已撤销 1 个批次，还原 {outcomes.Count} 个文件");
 			}
 		}
+		// 逐行日志很容易被忽略，部分失败时必须给一个显式的汇总提示
+		int undoFailed = outcomes.Count(o => !o.Success);
+		if (undoFailed > 0)
+			ShowToast($"撤销完成：{undoFailed} 项未能还原，详见执行日志", ToastKind.Error);
 		await RefreshFromSources();
 	}
 
@@ -1820,6 +1881,9 @@ public sealed class MainViewModel : ObservableObject
 			RaisePropertyChanged(nameof(History));
 			ShowToast($"已重做 1 个批次，改名 {outcomes.Count} 个文件");
 		}
+		int redoFailed = outcomes.Count(o => !o.Success);
+		if (redoFailed > 0)
+			ShowToast($"重做完成：{redoFailed} 项未能改名，详见执行日志", ToastKind.Error);
 		await RefreshFromSources();
 	}
 

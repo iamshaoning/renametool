@@ -59,7 +59,12 @@ public static class HistoryStore
 		string? json = AppStorage.TryRead(AppStorage.HistoryFile);
 		if (string.IsNullOrWhiteSpace(json)) return [];
 		try { return JsonSerializer.Deserialize<List<HistoryEntry>>(json, Options) ?? []; }
-		catch { return []; }
+		catch (Exception ex)
+		{
+			// 内容已损坏：先留一份副本再当作空历史，避免随后的保存把原文件覆盖掉
+			AppStorage.BackupCorrupt(AppStorage.HistoryFile, ex);
+			return [];
+		}
 	}
 
 	/// <summary>写入历史文件；超过上限时从最旧一端裁掉。

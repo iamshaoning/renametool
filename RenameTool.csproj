@@ -7,7 +7,10 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- 清单由 app.manifest 模板生成（见下方 GenerateAppManifest 目标）：其中的 assemblyIdentity
+         必须带合法的 version，缺了系统会判清单无效、程序直接无法启动，故不能简单删掉了事。
+         生成后版本号只有下面 <Version> 一处来源。 -->
+    <ApplicationManifest>$(IntermediateOutputPath)app.generated.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <!-- 仅保留简体中文：本程序没有语言切换面板，其余 12 种语言的框架附属程序集
          （每个约 1.2 MB）属于纯冗余，发布时一并裁掉。 -->
@@ -15,11 +18,23 @@
     <!-- 版本号规则（每次修改自动加码）：
          修复 Bug / 调整样式 = 末位 +1（+0.0.1）；新增功能 = 中位 +1（+0.1.0）；
          各段范围 0-99，首位为大版本，仅由需求方通知变更。 -->
-    <Version>1.16.2</Version>
+    <Version>1.17.3</Version>
     <Description>本地批量文件重命名工具</Description>
     <!-- 单文件发布参数（publish 时启用）：
          dotnet publish -c Release -r win-x64 -p:PublishSingleFile=true -p:SelfContained=true -->
   </PropertyGroup>
+
+  <!-- 版本号单一来源：把 app.manifest 模板里的 __VERSION__ 换成 <Version> 再嵌入程序。
+       手改清单里的版本号不会生效，改 <Version> 即可（CI 的 release.yml 读的也是它）。 -->
+  <Target Name="GenerateAppManifest" BeforeTargets="CoreCompile"
+          Inputs="app.manifest;$(MSBuildProjectFullPath)"
+          Outputs="$(ApplicationManifest)">
+    <PropertyGroup>
+      <_ManifestTemplate>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)\app.manifest').Replace('__VERSION__', '$(Version)'))</_ManifestTemplate>
+    </PropertyGroup>
+    <MakeDir Directories="$(IntermediateOutputPath)" />
+    <WriteLinesToFile File="$(ApplicationManifest)" Lines="$(_ManifestTemplate)" Overwrite="true" />
+  </Target>
 
   <ItemGroup>
     <!-- 供窗口/任务栏使用的图标资源（同时通过 ApplicationIcon 嵌入 exe） -->

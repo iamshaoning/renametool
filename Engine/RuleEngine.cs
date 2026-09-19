@@ -56,7 +56,7 @@ public static class RuleEngine
 			{
 				var map = sequenceMaps.TryGetValue(rule.Id, out var m) ? m : null;
 				string token = map is not null && map.TryGetValue(file, out var t) ? t : "";
-				current = ApplySequence(rule, current, file, token, ordinal);
+				current = ApplySequence(rule, current, token);
 			}
 			else if (rule.Type == RuleType.PairSwap)
 			{
@@ -78,14 +78,16 @@ public static class RuleEngine
 
 	private static string ApplyTransform(RenameRule rule, string name, FileItem file, int ordinal)
 	{
+		// 作用域决定“改写哪一段”，但 {name} 之类的变量永远指整个当前名称：
+		// 把完整名称 name 单独传给各规则，避免扩展名作用域下 {name} 退化成扩展名本身。
 		return TransformByScope(rule.Scope, name, target =>
 		{
 			return rule.Type switch
 			{
-				RuleType.FindReplace => FindReplace(rule.Config, target, file, ordinal),
-				RuleType.Insert => Insert(rule.Config, target, file, ordinal),
+				RuleType.FindReplace => FindReplace(rule.Config, target, name, file, ordinal),
+				RuleType.Insert => Insert(rule.Config, target, name, file, ordinal),
 				RuleType.Sequence => target,
-				RuleType.NameTemplate => NameTemplate(rule.Config, target, file, ordinal),
+				RuleType.NameTemplate => NameTemplate(rule.Config, target, name, file, ordinal),
 				RuleType.CaseStyle => Case(rule.Config, target),
 				RuleType.RemoveCleanup => Remove(rule.Config, target),
 				_ => target,
@@ -93,7 +95,7 @@ public static class RuleEngine
 		});
 	}
 
-	private static string ApplySequence(RenameRule rule, string name, FileItem file, string token, int ordinal)
+	private static string ApplySequence(RenameRule rule, string name, string token)
 	{
 		var cfg = rule.Config;
 		if (token.Length == 0) return name;
@@ -140,10 +142,10 @@ public static class RuleEngine
 
 	// ────────────────────────── 各规则实现 ──────────────────────────
 
-	private static string FindReplace(RuleConfig cfg, string text, FileItem file, int ordinal)
+	private static string FindReplace(RuleConfig cfg, string text, string fullName, FileItem file, int ordinal)
 	{
 		if (string.IsNullOrEmpty(cfg.Find)) return text;
-		string replacement = ResolveTemplate(cfg.Replace, file, text, ordinal);
+		string replacement = ResolveTemplate(cfg.Replace, file, fullName, ordinal);
 
 		if (cfg.UseRegex)
 		{
@@ -178,15 +180,15 @@ public static class RuleEngine
 		return idx < 0 ? text : text[..idx] + replacement + text[(idx + cfg.Find.Length)..];
 	}
 
-	private static string NameTemplate(RuleConfig cfg, string text, FileItem file, int ordinal)
+	private static string NameTemplate(RuleConfig cfg, string text, string fullName, FileItem file, int ordinal)
 	{
 		if (string.IsNullOrEmpty(cfg.Template)) return text;
-		return ResolveTemplate(cfg.Template, file, text, ordinal);
+		return ResolveTemplate(cfg.Template, file, fullName, ordinal);
 	}
 
-	private static string Insert(RuleConfig cfg, string text, FileItem file, int ordinal)
+	private static string Insert(RuleConfig cfg, string text, string fullName, FileItem file, int ordinal)
 	{
-		string toInsert = ResolveTemplate(cfg.Text, file, text, ordinal);
+		string toInsert = ResolveTemplate(cfg.Text, file, fullName, ordinal);
 		if (toInsert.Length == 0) return text;
 		return cfg.InsertAt switch
 		{
@@ -224,8 +226,14 @@ public static class RuleEngine
 			}
 			case CleanupMode.Range:
 			{
+				if (text.Length == 0) return text;
 				int start = Math.Clamp(Math.Min(cfg.RangeStart, cfg.RangeEnd), 0, text.Length);
-				int end = Math.Clamp(Math.Max(cfg.RangeStart, cfg.RangeEnd) + 1, 0, text.Length);
+				// 先夹到 text.Length - 1 再 +1：RangeEnd 由用户自由输入且无上限，
+				// 若直接对 int.MaxValue 做 +1 会回绕成 int.MinValue，被夹成 0 后 end <= start，
+				// 整条规则会静默失效（输入框里明明填了范围，结果什么都不删）。
+				int last = Math.Min(Math.Max(cfg.RangeStart, cfg.RangeEnd), text.Length - 1);
+				if (last < 0) return text;                          // 全为负数：无字符可删
+				int end = last + 1;
 				if (end <= start) return text;
 				return text.Remove(start, end - start);
 			}
@@ -251,6 +259,7 @@ public static class RuleEngine
 	// ────────────────────────── 模板变量 ──────────────────────────
 
 	/// <summary>解析模板中的通用变量。无效占位保持原样。</summary>
+	/// <param name="currentName">当前完整名称（含扩展名）：{name} 取其基名，故与作用域无关。</param>
 	public static string ResolveTemplate(string template, FileItem file, string currentName, int ordinal)
 	{
 		if (string.IsNullOrEmpty(template) || template.IndexOf('{') < 0) return template;
@@ -280,7 +289,9 @@ public static class RuleEngine
 	private static string? ResolveToken(string token, FileItem file, string currentName, int ordinal)
 	{
 		if (token == "n") return ordinal.ToString();
-		if (token == "name") return currentName;
+		// {name} 固定为“当前名称去掉扩展名”，与作用域无关：
+		// 作用域=扩展名时传入的 currentName 仍是完整名称，此处取基名才不会退化成扩展名本身。
+		if (token == "name") return NameUtils.Split(currentName).BaseName;
 		if (token == "ext") return file.Extension.TrimStart('.');
 		if (token == "size") return file.Size.FormatFileSize();
 		if (token == "folderName") return Path.GetFileName(file.Directory);

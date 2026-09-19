@@ -6,7 +6,7 @@ namespace RenameTool.Engine;
 /// <summary>预览计算：按规则链生成每个文件的新名称并做冲突检测。</summary>
 public static class PreviewEngine
 {
-	public sealed record Result(List<PreviewItem> Items, int AffectedCount, int ConflictCount, int OkChangeCount);
+	public sealed record Result(List<PreviewItem> Items, int AffectedCount, int ConflictCount);
 
 	/// <summary>
 	/// 对 <paramref name="files"/>（保持列表顺序）计算全部预览。
@@ -82,15 +82,14 @@ public static class PreviewEngine
 			else newName = RuleEngine.ApplyChain(file,
 				ordinalByFile.TryGetValue(file, out int o) ? o : 0, enabledRules, sequenceMaps, swapMaps);
 
-			string dirKey = file.Directory;
-			string nameKey = dirKey.Length == 0 ? newName : dirKey + "\u0000" + newName;
+			string nameKey = TargetKey(file.Directory, newName);
 			seen.TryGetValue(nameKey, out int count);
 			seen[nameKey] = count + 1;
 
 			rows.Add((file, original, newName, inScopeFlag, file.Directory));
 		}
 
-		int affected = 0, conflict = 0, okChanges = 0;
+		int affected = 0, conflict = 0;
 		string? prevDir = null;
 
 		// 先算出「本批会改名挪走哪些现有路径」，再做冲突判定：交换名（a→b、b→a）与改名环里，
@@ -106,16 +105,16 @@ public static class PreviewEngine
 			if (inScopeFlag && hasChange)
 			{
 				affected++;
-				string dirKey = dir.Length == 0 ? newName : dir + "\u0000" + newName;
-				if (seen[dirKey] > 1) issue = PreviewIssue.Conflict;
-				else if (newName.Length == 0 || newName == ".") issue = PreviewIssue.EmptyName;
+				// 判定顺序 = 「越具体、越硬性」的排在前：空名 / 非法字符 / 路径过长都是必须先解决的问题，
+				// 若让「重名」抢先判定，用户会看到「冲突」而去查重名，真正的根因被掩盖。
+				if (newName.Length == 0 || newName == ".") issue = PreviewIssue.EmptyName;
 				else if (NameUtils.HasIllegalChars(newName) || NameUtils.IsReservedName(newName)) issue = PreviewIssue.Illegal;
 				else if (dir.Length + 1 + newName.Length >= NameUtils.MaxFullPathLength) issue = PreviewIssue.TooLong;
+				else if (seen[TargetKey(dir, newName)] > 1) issue = PreviewIssue.Conflict;
 				// 与执行期同一套判定：目标被磁盘占用（且占用者不在本批挪走名单里）才算冲突
 				else if (TakenOnDisk(dir, original, newName, vacating)) issue = PreviewIssue.Conflict;
 
-				if (issue == PreviewIssue.None) okChanges++;
-				else conflict++;
+				if (issue != PreviewIssue.None) conflict++;
 			}
 
 			// 序号越界：该文件拿不到序号、不会按原意改名。若此刻没有更具体的问题，就标出它并计入统计，
@@ -149,7 +148,7 @@ public static class PreviewEngine
 			});
 		}
 
-		return new Result(items, affected, conflict, okChanges);
+		return new Result(items, affected, conflict);
 	}
 
 	/// <summary>执行前体检 + 计划构建结果。</summary>
@@ -231,7 +230,19 @@ public static class PreviewEngine
 
 			used.Add(TargetKey(dir, name));
 
-			// 体检：自动编号后仍需复核路径长度
+			// 体检：自动编号后必须整套复核，不能只查长度。
+			// MakeUnique 只在基名后追加 “ (1)”，既不修非法字符也不改保留名；若这里漏查，
+			// 预览会说「能解决」，执行期才抛异常，用户看到的失败与预览不一致。
+			if (name.Length == 0 || name == ".")
+			{
+				skipped.Add((item.OriginalName, name, "名称为空"));
+				continue;
+			}
+			if (NameUtils.HasIllegalChars(name) || NameUtils.IsReservedName(name))
+			{
+				skipped.Add((item.OriginalName, name, "含非法字符或为系统保留名"));
+				continue;
+			}
 			if (dir.Length + 1 + name.Length >= NameUtils.MaxFullPathLength)
 			{
 				skipped.Add((item.OriginalName, name, "路径过长"));

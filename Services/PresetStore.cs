@@ -38,18 +38,27 @@ public static class PresetStore
 		Converters = { new JsonStringEnumConverter() },
 	};
 
+	/// <summary>
+	/// 深拷贝一份规则参数。预设与实时规则必须各持独立实例：
+	/// 直接传引用时，套用预设后再改参数会把已保存的预设一起改掉（同一对象），
+	/// 同一预设套用两次得到的两条规则也会互相牵连。属性都是可读写的简单类型，用 JSON 往返最省心。
+	/// </summary>
+	private static RuleConfig Clone(RuleConfig config)
+		=> JsonSerializer.Deserialize<RuleConfig>(JsonSerializer.Serialize(config, Options), Options)
+		   ?? RuleConfig.CreateDefault(config.Type);
+
 	public static PresetRule ToData(RenameRule rule) => new()
 	{
 		Type = rule.Type,
 		Enabled = rule.Enabled,
 		Scope = rule.Scope,
-		Config = rule.Config,
+		Config = Clone(rule.Config),
 	};
 
 	public static RenameRule FromData(PresetRule data) => new()
 	{
 		Type = data.Type,
-		Config = data.Config ?? RuleConfig.CreateDefault(data.Type),
+		Config = data.Config is null ? RuleConfig.CreateDefault(data.Type) : Clone(data.Config),
 		Enabled = data.Enabled,
 		Scope = data.Scope,
 	};
@@ -62,7 +71,12 @@ public static class PresetStore
 		string? json = AppStorage.TryRead(AppStorage.PresetsFile);
 		if (string.IsNullOrWhiteSpace(json)) return [];
 		try { return JsonSerializer.Deserialize<List<RulePreset>>(json, Options) ?? []; }
-		catch { return []; }
+		catch (Exception ex)
+		{
+			// 内容已损坏：先留一份副本再当作空预设，避免随后的保存把原文件覆盖掉
+			AppStorage.BackupCorrupt(AppStorage.PresetsFile, ex);
+			return [];
+		}
 	}
 
 	public static void SavePresets(List<RulePreset> presets)

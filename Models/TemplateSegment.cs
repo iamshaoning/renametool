@@ -47,7 +47,7 @@ public static class TemplateVariables
 	public static IReadOnlyList<TemplateVariable> All { get; } =
 	[
 		new("{n}", "序号", "{n}：当前文件的序号"),
-		new("{name}", "原文件名", "{name}：当前文件名（不含扩展名）"),
+		new("{name}", "原文件名", "{name}：当前名称去掉扩展名的部分"),
 		new("{ext}", "扩展名", "{ext}：原文件的扩展名（不含点）"),
 		new("{size}", "文件大小", "{size}：文件大小（自动进位，如 1.2 MB）"),
 		new("{folderName}", "所在文件夹名", "{folderName}：文件所在文件夹的名称"),

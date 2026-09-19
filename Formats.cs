@@ -2,24 +2,19 @@ namespace RenameTool;
 
 public static class Formats
 {
-	// C# 14 扩展成员（extension 块）：接收者参数统一声明在块上，
-	// 调用方式与原来的扩展方法完全一致（bytes.FormatFileSize()）。
-	extension(long bytes)
+	/// <summary>字节数格式化为可读文本。</summary>
+	public static string FormatFileSize(this long bytes)
 	{
-		/// <summary>字节数格式化为可读文本。</summary>
-		public string FormatFileSize()
+		if (bytes < 0) return "0 B";
+		string[] units = ["B", "KB", "MB", "GB", "TB"];
+		double value = bytes;
+		int unit = 0;
+		while (value >= 1024 && unit < units.Length - 1)
 		{
-			if (bytes < 0) return "0 B";
-			string[] units = ["B", "KB", "MB", "GB", "TB"];
-			double value = bytes;
-			int unit = 0;
-			while (value >= 1024 && unit < units.Length - 1)
-			{
-				value /= 1024;
-				unit++;
-			}
-			return unit == 0 ? $"{bytes} B" : $"{value:0.#} {units[unit]}";
+			value /= 1024;
+			unit++;
 		}
+		return unit == 0 ? $"{bytes} B" : $"{value:0.#} {units[unit]}";
 	}
 }
 

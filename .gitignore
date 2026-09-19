@@ -2,6 +2,8 @@
 bin/
 obj/
 publish/
+# 由 RenameTool.csproj 的 GenerateAppManifest 目标生成，属构建产物
+app.generated.manifest
 
 # 打包产物（publish.ps1 输出，体积大，不入库）
 dist/

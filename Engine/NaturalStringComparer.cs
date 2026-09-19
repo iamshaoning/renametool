@@ -30,6 +30,10 @@ public sealed class NaturalStringComparer : IComparer<string>
 					char da = x[a0 + k], db = y[b0 + k];
 					if (da != db) return da < db ? -1 : 1;
 				}
+				// 数值相等（如 "1" 与 "01"）时用原始位段长度打破平局。否则两者被判为相等，
+				// 排序结果依赖输入顺序，"先排序再编号" 会对同一份列表给出不同编号。
+				int ra = i - si, rb = j - sj;
+				if (ra != rb) return ra < rb ? -1 : 1;
 				continue;
 			}
 			if (cx != cy)

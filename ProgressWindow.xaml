@@ -1,9 +1,9 @@
-﻿<local:ToolWindow x:Class="RenameTool.ProgressWindow"
+<local:ToolWindow x:Class="RenameTool.ProgressWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:RenameTool"
         Title="正在处理"
-        Width="440" SizeToContent="Height" MinWidth="360"
+        Width="440" SizeToContent="Height" MinWidth="360" MinHeight="180"
         WindowStyle="None" ResizeMode="NoResize" ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner"
         FontFamily="Microsoft YaHei UI, Microsoft YaHei"
@@ -11,6 +11,7 @@
         Background="{DynamicResource WindowBrush}"
         Foreground="{DynamicResource TextBrush}"
         MouseLeftButtonDown="Window_MouseLeftButtonDown"
+        PreviewKeyDown="Window_PreviewKeyDown"
         Loaded="Window_Loaded"
         Closed="Window_Closed">
 

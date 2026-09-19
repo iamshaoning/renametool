@@ -64,10 +64,18 @@ public partial class App : Application
 			if (ThemeSetting == "system") Current?.Dispatcher.Invoke(ApplyTheme);
 		};
 
-		// 全局屏蔽键盘焦点虚线框（Up/Down/Tab 之后出现的那圈点状虚线）。
+		// 高对比度开关同样跟随系统：开启时改用高对比调色板（见 ApplyTheme）。
+		// UserPreferenceChanged 不保证覆盖「辅助功能 → 高对比度」的切换，故单独监听一次。
+		SystemParameters.StaticPropertyChanged += (_, args) =>
+		{
+			if (args.PropertyName == nameof(SystemParameters.HighContrast))
+				Current?.Dispatcher.Invoke(ApplyTheme);
+		};
+
+		// 把键盘焦点框统一换成本主题的低调描边环（默认为系统点状虚线）。
 		// 注意：在 Application.Resources 里挂 SystemParameters.FocusVisualStyleKey 的空模板
-		// 是无效的——Control.FocusVisualStyle 的默认值不走资源查找，必须在焦点落到元素之前
-		// 把它的 FocusVisualStyle 清空。用类处理器统一处理，覆盖所有窗口与弹出层。
+		// 是无效的——Control.FocusVisualStyle 的默认值不走资源查找，必须在焦点落到元素之前改写。
+		// 用类处理器统一处理，覆盖所有窗口与弹出层。
 		EventManager.RegisterClassHandler(typeof(FrameworkElement), UIElement.PreviewGotKeyboardFocusEvent,
 			new KeyboardFocusChangedEventHandler(OnPreviewGotKeyboardFocus), true);
 
@@ -90,11 +98,23 @@ public partial class App : Application
 		window.Show();
 	}
 
-	/// <summary>焦点落到任意元素前清空其焦点框样式，等于全局关闭键盘焦点虚线框。</summary>
+	/// <summary>把默认的系统点状虚线框换成主题化的低调焦点环；
+	/// 控件若自行显式声明了 FocusVisualStyle（局部赋值）则尊重其选择，不覆盖。</summary>
 	private static void OnPreviewGotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
 	{
+		if (e.NewFocus is Control control)
+		{
+			if (control.ReadLocalValue(FrameworkElement.FocusVisualStyleProperty) != DependencyProperty.UnsetValue) return;
+			_focusRing ??= Current?.TryFindResource("FocusRingStyle") as Style;
+			if (_focusRing is not null) control.FocusVisualStyle = _focusRing;
+			return;
+		}
+		// 可聚焦的纯容器（如滚动容器）：没有绘制焦点框的语义，仍按旧行为清掉系统虚线框。
 		if (e.NewFocus is FrameworkElement fe) fe.FocusVisualStyle = null;
 	}
+
+	/// <summary>主题化焦点环样式，取自 Controls.xaml，进程内缓存一份即可。</summary>
+	private static Style? _focusRing;
 
 	/// <summary>把已在运行的那个实例的主窗口还原并置前；找不到窗口时静默返回。</summary>
 	private static void ActivateExistingInstance()
@@ -151,7 +171,7 @@ public partial class App : Application
 		ApplyTheme();
 	}
 
-	/// <summary>按当前模式应用调色板（不落盘）。</summary>
+	/// <summary>按当前模式（含系统高对比度）应用调色板（不落盘）。</summary>
 	public static void ApplyTheme()
 	{
 		IsDarkMode = ThemeSetting switch
@@ -162,19 +182,24 @@ public partial class App : Application
 		};
 		if (Current is not App app) return;
 
-		var source = IsDarkMode ? "Themes/ColorsDark.xaml" : "Themes/ColorsLight.xaml";
+		// 高对比度优先：系统开启时改用映射到 SystemColors 的调色板，
+		// 由系统配色保证前景/背景对比度，不再使用本程序自定的柔和色。
+		var source = SystemParameters.HighContrast
+			? "Themes/ColorsHighContrast.xaml"
+			: IsDarkMode ? "Themes/ColorsDark.xaml" : "Themes/ColorsLight.xaml";
 		var palette = new ResourceDictionary { Source = new Uri(source, UriKind.Relative) };
 		var merged = app.Resources.MergedDictionaries;
+		int found = -1;
 		for (int i = 0; i < merged.Count; i++)
 		{
 			var src = merged[i].Source?.OriginalString ?? "";
-			if (src.Contains("Colors", StringComparison.OrdinalIgnoreCase))
-			{
-				merged[i] = palette;
-				return;
-			}
+			if (src.Contains("Colors", StringComparison.OrdinalIgnoreCase)) { found = i; break; }
 		}
-		merged.Insert(0, palette);
+		if (found >= 0) merged[found] = palette;
+		else merged.Insert(0, palette);
+
+		// 转换器内的主题画刷是普通对象、不会随资源字典替换而更新（见 ThemeBrush），此处主动同步。
+		ThemeBrush.RefreshAll();
 	}
 
 	private static bool IsSystemDark()

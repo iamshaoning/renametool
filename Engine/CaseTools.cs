@@ -39,7 +39,9 @@ public static class CaseTools
 			else
 			{
 				sb.Append(c);
-				if (!char.IsLetter(c) && !char.IsDigit(c)) wordStart = true;
+				// 撇号不是词边界：don't 应得到 Don't（原文如此），而不是 Don'T。
+				// 直角撇号与弯撇号都要排除（中文输入法常产出后者）。
+				if (!char.IsLetter(c) && !char.IsDigit(c) && c is not ('\'' or '\u2019')) wordStart = true;
 			}
 		}
 		return sb.ToString();
